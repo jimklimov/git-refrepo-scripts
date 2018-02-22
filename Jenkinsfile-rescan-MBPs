@@ -3,32 +3,14 @@ import hudson.model.*
 import hudson.util.PersistedList
 import jenkins.branch.*
 
-pipeline {
-    options {
-/*
-        description("This job runs regularly to find and rescan multibranch pipeline jobs (e.g. generated via organization folders) to add monitoring of new PRs (and disable monitoring of merged PRs) in a timely fashion.")
-*/
-        disableConcurrentBuilds()
-        disableResume()
-        durabilityHint('PERFORMANCE_OPTIMIZED')
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-    }
-    triggers {
-        cron('H/5 * * * *')
-    }
-    agent {label "master||master-real||master-worker"}
-    stages {
-        stage('Scan MBP jobs') {
-//            when { expression (env.BRANCH_NAME == "master") }
-            steps {
-                milestone 1
-                script {
+//@NonCPS
+def parallelSubtasks() {
                     def subbuilds = [:]
                     def jobs = Jenkins.instance.getAllItems()
 
                     jobs = Jenkins.instance.getAllItems()
-                    // jobs.each { j ->
-                    for (j in jobs) {
+                    jobs.each { j ->
+                    // for (j in jobs) {
                       if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) { 
                         //echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
                         return
@@ -68,8 +50,31 @@ pipeline {
                       } // end of def subbuilds[j.fullName]
                     } // jobs.each() clause
 
-                    // @NonCPS
                     parallel subbuilds
+}
+
+
+pipeline {
+    options {
+/*
+        description("This job runs regularly to find and rescan multibranch pipeline jobs (e.g. generated via organization folders) to add monitoring of new PRs (and disable monitoring of merged PRs) in a timely fashion.")
+*/
+        disableConcurrentBuilds()
+        disableResume()
+        durabilityHint('PERFORMANCE_OPTIMIZED')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+    triggers {
+        cron('H/5 * * * *')
+    }
+    agent {label "master||master-real||master-worker"}
+    stages {
+        stage('Scan MBP jobs') {
+//            when { expression (env.BRANCH_NAME == "master") }
+            steps {
+                milestone 1
+                script {
+                    parallelSubtasks()
                 } // script clause
             } // steps clause
         }
