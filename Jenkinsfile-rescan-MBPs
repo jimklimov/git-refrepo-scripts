@@ -29,33 +29,33 @@ pipeline {
                     jobs = Jenkins.instance.getAllItems()
                     jobs.each { j ->
                       if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) { 
-                        //println 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
+                        //echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
                         return
                       }
                       if (j instanceof jenkins.branch.OrganizationFolder) {
-                        //println 'Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
+                        //echo 'Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
                         return
                       }
                       if (! (j instanceof org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject) ) {
-                        //println 'Ignoring JOB which is not an MBP: ' + j.fullName
+                        //echo 'Ignoring JOB which is not an MBP: ' + j.fullName
                         return;
                       }
                       if ( ! j.fullName.contains("/") ) {
-                        println 'Ignoring MBP JOB which is not under a (organization) folder, so has and honours a schedule of its own: ' + j.fullName
+                        echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and honours a schedule of its own: ' + j.fullName
                         return;
                       }
                     // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
-                      println 'MBP JOB: ' + j.fullName
 /*
+                      echo 'MBP JOB: ' + j.fullName
                       def subjob = hudson.model.Hudson.instance.getJob(j.fullName)
-                      println '+ made subjob'
+                      echo '+ made subjob'
                       def cause = new hudson.model.Cause.UpstreamCause(build)
-                      println '+ made cause'
+                      echo '+ made cause'
                       def causeAction = new hudson.model.CauseAction(cause)
-                      println '+ made causeAction'
+                      echo '+ made causeAction'
                       hudson.model.Hudson.instance.queue.schedule2(subjob, 0, causeAction)
-                      println '+ scheduled'
+                      echo '+ scheduled'
 */
 
                       subbuilds[j.fullName] = {
