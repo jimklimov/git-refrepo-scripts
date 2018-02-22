@@ -12,9 +12,13 @@ pipeline {
         disableResume()
         durabilityHint(hint : PERFORMANCE_OPTIMIZED)
     }
+    triggers {
+        cron('H/5 * * * *')
+    }
     agent {label "master||master-real||master-worker"}
     stages {
         stage('Scan MBP jobs') {
+//            when { expression (env.BRANCH_NAME == "master") }
             steps {
                 milestone 1
                 script {
