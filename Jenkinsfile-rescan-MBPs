@@ -66,8 +66,10 @@ def parallelSubtasks(String verbose) {
     echo subbuilds
 
     echo "Exec via temp-file"
-    writeFile file: 'steps.groovy', text: "parallel { " + subbuilds.toString() + " }"
+    writeFile file: 'steps.groovy', text: "parallel { " + subbuilds.toString() + " }\n"
+    echo "Load the temp-file..."
     load 'steps.groovy'
+    echo "Loaded temp-file above"
 }
 
 
