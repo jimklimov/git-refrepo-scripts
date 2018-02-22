@@ -34,7 +34,7 @@ def parallelSubtasks(String verbose) {
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
-        subbuilds[j.fullName] = {
+        subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
                 steps {
                     build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
