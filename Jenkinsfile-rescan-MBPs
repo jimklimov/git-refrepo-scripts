@@ -1,0 +1,70 @@
+import jenkins.model.*
+import hudson.model.*
+import hudson.util.PersistedList
+import jenkins.branch.*
+
+pipeline {
+    options {
+/*
+        description("This job runs regularly to find and rescan multibranch pipeline jobs (e.g. generated via organization folders) to add monitoring of new PRs (and disable monitoring of merged PRs) in a timely fashion.")
+*/
+        disableConcurrentBuilds()
+        disableResume()
+        durabilityHint(hint : PERFORMANCE_OPTIMIZED)
+    }
+    agent {label "master||master-real||master-worker"}
+    stages {
+        stage('Scan MBP jobs') {
+            steps {
+                milestone 1
+                script {
+                    def subbuilds = [:]
+                    def jobs = Jenkins.instance.getAllItems()
+
+                    jobs = Jenkins.instance.getAllItems()
+                    jobs.each { j ->
+                      if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) { 
+                        //println 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
+                        return
+                      }
+                      if (j instanceof jenkins.branch.OrganizationFolder) {
+                        //println 'Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
+                        return
+                      }
+                      if (! (j instanceof org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject) ) {
+                        //println 'Ignoring JOB which is not an MBP: ' + j.fullName
+                        return;
+                      }
+                      if ( ! j.fullName.contains("/") ) {
+                        println 'Ignoring MBP JOB which is not under a (organization) folder, so has and honours a schedule of its own: ' + j.fullName
+                        return;
+                      }
+                    // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
+
+                      println 'MBP JOB: ' + j.fullName
+/*
+                      def subjob = hudson.model.Hudson.instance.getJob(j.fullName)
+                      println '+ made subjob'
+                      def cause = new hudson.model.Cause.UpstreamCause(build)
+                      println '+ made cause'
+                      def causeAction = new hudson.model.CauseAction(cause)
+                      println '+ made causeAction'
+                      hudson.model.Hudson.instance.queue.schedule2(subjob, 0, causeAction)
+                      println '+ scheduled'
+*/
+
+                      subbuilds[j.fullName] = {
+                        stage("Scan ${j.fullName}") {
+                            steps {
+                                build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
+                            }
+                        }
+                      } // end of def subbuilds[j.fullName]
+                    } // jobs.each() clause
+
+                    parallel subbuilds
+                } // script clause
+            } // steps clause
+        }
+    }
+}
