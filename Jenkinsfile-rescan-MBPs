@@ -11,6 +11,7 @@ pipeline {
         disableConcurrentBuilds()
         disableResume()
         durabilityHint('PERFORMANCE_OPTIMIZED')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
     triggers {
         cron('H/5 * * * *')
