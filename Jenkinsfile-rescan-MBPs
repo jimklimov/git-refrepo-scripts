@@ -4,53 +4,48 @@ import hudson.util.PersistedList
 import jenkins.branch.*
 
 @NonCPS
-def parallelSubtasks() {
-                    def subbuilds = [:]
-                    def jobs = Jenkins.instance.getAllItems()
+def parallelSubtasks(String verbose) {
+    def subbuilds = [:]
+    def jobs = Jenkins.instance.getAllItems()
 
-                    jobs = Jenkins.instance.getAllItems()
-                    jobs.each { j ->
-                    // for (j in jobs) {
-                      if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) { 
-                        //echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
-                        return
-                      }
-                      if (j instanceof jenkins.branch.OrganizationFolder) {
-                        //echo 'Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
-                        return
-                      }
-                      if (! (j instanceof org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject) ) {
-                        //echo 'Ignoring JOB which is not an MBP: ' + j.fullName
-                        return;
-                      }
-                      if ( ! j.fullName.contains("/") ) {
-                        echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and honours a schedule of its own: ' + j.fullName
-                        return;
-                      }
-                    // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
+    jobs = Jenkins.instance.getAllItems()
+    jobs.each { j ->
+        if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
+            if (verbose.equals("true")) {
+                echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
+            }
+            return
+        }
+        if (j instanceof jenkins.branch.OrganizationFolder) {
+            if (verbose.equals("true")) {
+                echo 'Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
+            }
+            return
+        }
+        if (! (j instanceof org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject) ) {
+            if (verbose.equals("true")) {
+                echo 'Ignoring JOB which is not an MBP: ' + j.fullName
+            }
+            return;
+        }
+        if ( ! j.fullName.contains("/") ) {
+            echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and hopefully honours a schedule of its own: ' + j.fullName
+            return;
+        }
+        // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
-/*
-                      echo 'MBP JOB: ' + j.fullName
-                      def subjob = hudson.model.Hudson.instance.getJob(j.fullName)
-                      echo '+ made subjob'
-                      def cause = new hudson.model.Cause.UpstreamCause(build)
-                      echo '+ made cause'
-                      def causeAction = new hudson.model.CauseAction(cause)
-                      echo '+ made causeAction'
-                      hudson.model.Hudson.instance.queue.schedule2(subjob, 0, causeAction)
-                      echo '+ scheduled'
-*/
+        subbuilds[j.fullName] = {
+            stage("Scan ${j.fullName}") {
+                steps {
+                    build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
+                }
+            }
+        } // end of def subbuilds[j.fullName]
 
-                      subbuilds[j.fullName] = {
-                        stage("Scan ${j.fullName}") {
-                            steps {
-                                build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
-                            }
-                        }
-                      } // end of def subbuilds[j.fullName]
-                    } // jobs.each() clause
+    } // jobs.each() clause
 
-                    parallel subbuilds
+    // Unleash hell, wait for results
+    parallel subbuilds
 }
 
 
@@ -68,13 +63,20 @@ pipeline {
         cron('H/5 * * * *')
     }
     agent {label "master||master-real||master-worker"}
+    parameters {
+        booleanParam (
+            defaultValue: false,
+            description: 'Print found and skipped items?',
+            name: 'JOBLIST_VERBOSE'
+        )
+    }
     stages {
         stage('Scan MBP jobs') {
 //            when { expression (env.BRANCH_NAME == "master") }
             steps {
                 milestone 1
                 script {
-                    parallelSubtasks()
+                    parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
                 } // script clause
             } // steps clause
         }
