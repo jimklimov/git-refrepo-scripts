@@ -58,6 +58,7 @@ pipeline {
         disableResume()
         durabilityHint('PERFORMANCE_OPTIMIZED')
         buildDiscarder(logRotator(numToKeepStr: '10'))
+        skipDefaultCheckout true
     }
     triggers {
         cron('H/5 * * * *')
