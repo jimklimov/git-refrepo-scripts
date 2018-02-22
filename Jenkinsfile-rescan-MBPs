@@ -27,7 +27,8 @@ pipeline {
                     def jobs = Jenkins.instance.getAllItems()
 
                     jobs = Jenkins.instance.getAllItems()
-                    jobs.each { j ->
+                    // jobs.each { j ->
+                    for (j in jobs) {
                       if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) { 
                         //echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
                         return
@@ -67,6 +68,7 @@ pipeline {
                       } // end of def subbuilds[j.fullName]
                     } // jobs.each() clause
 
+                    // @NonCPS
                     parallel subbuilds
                 } // script clause
             } // steps clause
