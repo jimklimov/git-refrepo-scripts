@@ -8,10 +8,11 @@ def parallelSubtasks(String verbose) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
 
-    jobs = Jenkins.instance.getAllItems()
-//    jobs.each { j ->
-    for (int i = 0; i < jobs.size(); i++) {
-        def j = jobs[i];
+    jobs.each { j ->
+//    for (j in jobs) {
+//    for (int i = 0; i < jobs.size(); i++) {
+//        def j = jobs[i];
+
         if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
             if (verbose.equals("true")) {
                 echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
