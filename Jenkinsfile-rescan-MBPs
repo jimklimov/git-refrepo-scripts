@@ -5,7 +5,8 @@ import jenkins.branch.*
 
 @NonCPS
 def parallelSubtasks(String verbose) {
-    def subbuilds = [:]
+//    def subbuilds = [:]
+    def subbuilds = ""
     def jobs = Jenkins.instance.getAllItems()
 
     jobs.each { j ->
@@ -37,6 +38,7 @@ def parallelSubtasks(String verbose) {
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
+/*
         subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
                 steps {
@@ -45,6 +47,16 @@ def parallelSubtasks(String verbose) {
                 }
             }
         } // end of def subbuilds[j.fullName]
+*/
+
+        subbuilds += """
+            stage("Scan ${j.fullName}") {
+                steps {
+                    echo "Rescanning '${j.fullName}' ..."
+//                    build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
+                }
+            }
+"""
 
     } // jobs.each() clause
 
