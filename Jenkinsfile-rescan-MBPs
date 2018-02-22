@@ -37,7 +37,8 @@ def parallelSubtasks(String verbose) {
         subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
                 steps {
-                    build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
+                    echo "Rescanning '${j.fullName}' ..."
+//                    build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
                 }
             }
         } // end of def subbuilds[j.fullName]
