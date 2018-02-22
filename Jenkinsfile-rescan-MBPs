@@ -3,7 +3,7 @@ import hudson.model.*
 import hudson.util.PersistedList
 import jenkins.branch.*
 
-//@NonCPS
+@NonCPS
 def parallelSubtasks() {
                     def subbuilds = [:]
                     def jobs = Jenkins.instance.getAllItems()
