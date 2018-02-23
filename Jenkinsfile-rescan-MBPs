@@ -5,17 +5,15 @@ import hudson.model.*
 import hudson.util.PersistedList
 import jenkins.branch.*
 
+// This shared array variable will be populated with the list of parallel stages
+def scan_stages = [:]
+
 @NonCPS
 def parallelSubtasks(String verbose) {
-//    def subbuilds = [:]
-    def subbuilds = ""
+    def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
 
     jobs.each { j ->
-//    for (j in jobs) {
-//    for (int i = 0; i < jobs.size(); i++) {
-//        def j = jobs[i];
-
         if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
             if (verbose.equals("true")) {
                 echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
@@ -40,7 +38,6 @@ def parallelSubtasks(String verbose) {
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
-/*
         subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
                 steps {
@@ -49,53 +46,11 @@ def parallelSubtasks(String verbose) {
                 }
             }
         } // end of def subbuilds[j.fullName]
-*/
-
-        subbuilds += """
-            stage("Scan ${j.fullName}") {
-                steps {
-                    echo "Rescanning '${j.fullName}' ..."
-//                    build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
-                }
-            }
-"""
 
     } // jobs.each() clause
 
-    // Unleash hell, wait for results
-//    parallel subbuilds
+    return subbuilds
 
-/*
-    subbuilds = """
-    parallel {
-${subbuilds}
-    }
-"""
-*/
-
-/*
-    subbuilds = """
-@NonCPS
-def run_parallelscan() {
-${subbuilds}
-}
-"""
-*/
-
-    echo subbuilds
-
-    echo "Write the temp-file..."
-    sh "mkdir -p vars && echo '${subbuilds}' > 'vars/parallelscan.groovy'"
-//    writeFile file: 'vars/parallelscan.groovy', text: "${subbuilds}"
-
-/*
-    echo "Load the temp-file..."
-//    load 'vars/parallelscan.groovy'
-    library 'parallelscan'
-    echo "Loaded temp-file above"
-    run_parallelscan()
-    echo "Execed temp-file above"
-*/
 
 }
 
@@ -128,21 +83,16 @@ pipeline {
                 milestone 1
             } // steps clause
         }
-        stage('Scan MBP jobs') {
-//            when { expression (env.BRANCH_NAME == "master") }
-            parallel {
+        stage('Discover MBP jobs') {
+            steps {
                 script {
-                    parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
-
-    echo "2. Load the temp-file..."
-    load 'vars/parallelscan.groovy'
-//    library 'parallelscan'
-    echo "2. Loaded temp-file above"
-//    run_parallelscan()
-//    echo "2. Execed temp-file above"
-
+                    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
                 } // script clause
-            } // parallel clause
+            } // steps clause
+        }
+        stage('Scan MBP jobs') {
+            // Unleash hell, wait for results
+            parallel scan_stages
         }
     }
 }
