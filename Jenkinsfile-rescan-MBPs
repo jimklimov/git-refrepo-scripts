@@ -65,11 +65,13 @@ def parallelSubtasks(String verbose) {
     // Unleash hell, wait for results
 //    parallel subbuilds
 
+/*
     subbuilds = """
     parallel {
 ${subbuilds}
     }
 """
+*/
 
 /*
     subbuilds = """
@@ -128,6 +130,7 @@ pipeline {
         }
         stage('Scan MBP jobs') {
 //            when { expression (env.BRANCH_NAME == "master") }
+            parallel {
                 script {
                     parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
 
@@ -136,9 +139,10 @@ pipeline {
 //    library 'parallelscan'
     echo "2. Loaded temp-file above"
 //    run_parallelscan()
-    echo "2. Execed temp-file above"
+//    echo "2. Execed temp-file above"
 
                 } // script clause
+            } // parallel clause
         }
     }
 }
