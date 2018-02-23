@@ -65,11 +65,7 @@ def parallelSubtasks(String verbose) {
     // Unleash hell, wait for results
 //    parallel subbuilds
 
-    echo subbuilds
-
-    echo "Exec via temp-file"
-    dir ("vars") {
-        writeFile file: 'parallelscan.groovy', text: """
+    subbuilds = """
 @NonCPS
 def run_parallelscan() {
     parallel {
@@ -77,7 +73,13 @@ def run_parallelscan() {
     }
 }
 """
-    }
+
+    echo subbuilds
+
+    echo "Write the temp-file..."
+    sh "mkdir -p vars && echo '${subbuilds}' > 'vars/parallelscan.groovy'"
+//    writeFile file: 'vars/parallelscan.groovy', text: "${subbuilds}"
+
     echo "Load the temp-file..."
 //    load 'vars/parallelscan.groovy'
     library 'parallelscan'
