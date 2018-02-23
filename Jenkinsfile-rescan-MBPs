@@ -120,8 +120,8 @@ pipeline {
                     parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
 
     echo "2. Load the temp-file..."
-//    load 'vars/parallelscan.groovy'
-    library 'parallelscan'
+    load 'vars/parallelscan.groovy'
+//    library 'parallelscan'
     echo "2. Loaded temp-file above"
     run_parallelscan()
     echo "2. Execed temp-file above"
