@@ -66,13 +66,19 @@ def parallelSubtasks(String verbose) {
 //    parallel subbuilds
 
     subbuilds = """
+    parallel {
+${subbuilds}
+    }
+"""
+
+/*
+    subbuilds = """
 @NonCPS
 def run_parallelscan() {
-    parallel {
-        ${subbuilds}
-    }
+${subbuilds}
 }
 """
+*/
 
     echo subbuilds
 
@@ -123,7 +129,7 @@ pipeline {
     load 'vars/parallelscan.groovy'
 //    library 'parallelscan'
     echo "2. Loaded temp-file above"
-    run_parallelscan()
+//    run_parallelscan()
     echo "2. Execed temp-file above"
 
                 } // script clause
