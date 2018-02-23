@@ -121,10 +121,13 @@ pipeline {
         )
     }
     stages {
-        stage('Scan MBP jobs') {
-//            when { expression (env.BRANCH_NAME == "master") }
+        stage('Single-exec milestone') {
             steps {
                 milestone 1
+            } // steps clause
+        }
+        stage('Scan MBP jobs') {
+//            when { expression (env.BRANCH_NAME == "master") }
                 script {
                     parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
 
@@ -136,7 +139,6 @@ pipeline {
     echo "2. Execed temp-file above"
 
                 } // script clause
-            } // steps clause
         }
     }
 }
