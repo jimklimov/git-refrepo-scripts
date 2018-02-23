@@ -76,7 +76,7 @@ def run_parallelscan() {
         ${subbuilds}
     }
 }
-""""
+"""
     }
     echo "Load the temp-file..."
 //    load 'vars/parallelscan.groovy'
