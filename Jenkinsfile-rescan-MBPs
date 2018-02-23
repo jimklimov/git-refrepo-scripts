@@ -95,8 +95,8 @@ pipeline {
             // Unleash hell, wait for results
             parallel scan_stages
         }
-    }
 */
+    }
 }
 
 parallel scan_stages
