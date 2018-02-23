@@ -86,12 +86,15 @@ ${subbuilds}
     sh "mkdir -p vars && echo '${subbuilds}' > 'vars/parallelscan.groovy'"
 //    writeFile file: 'vars/parallelscan.groovy', text: "${subbuilds}"
 
+/*
     echo "Load the temp-file..."
 //    load 'vars/parallelscan.groovy'
     library 'parallelscan'
     echo "Loaded temp-file above"
     run_parallelscan()
     echo "Execed temp-file above"
+*/
+
 }
 
 
