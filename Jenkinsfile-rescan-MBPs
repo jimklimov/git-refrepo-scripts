@@ -43,7 +43,11 @@ def parallelSubtasks(String verbose) {
                 // Per non-declarative pipeline syntax, no steps{} here
                     echo "Rescanning '${j.fullName}' ..."
                     // Jenkins refuses to "wait" for this type of job...
-                    def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: true
+                    try {
+                        def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: true
+                    } catch (Exception e) {
+                        echo "Failed to trigger scan for ${j.fullName}, skipped"
+                    }
             }
         } // end of def subbuilds[j.fullName]
 
