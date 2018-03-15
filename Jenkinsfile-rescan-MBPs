@@ -40,18 +40,16 @@ def parallelSubtasks(String verbose) {
 
         subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
-                steps {
+                // Per non-declarative pipeline syntax, no steps{} here
                     echo "Rescanning '${j.fullName}' ..."
-//                    build job: "${j.fullName}", quietPeriod: 0, wait: true, propagate: true
-                }
+                    // Jenkins refuses to "wait" for this type of job...
+                    def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: true
             }
         } // end of def subbuilds[j.fullName]
 
     } // jobs.each() clause
 
     return subbuilds
-
-
 }
 
 
@@ -90,13 +88,13 @@ pipeline {
                 } // script clause
             } // steps clause
         }
-/*
         stage('Scan MBP jobs') {
-            // Unleash hell, wait for results
-            parallel scan_stages
+            steps {
+                script {
+                    // Unleash hell, wait for results
+                    parallel scan_stages
+                } // script clause
+            } // steps clause
         }
-*/
     }
 }
-
-parallel scan_stages
