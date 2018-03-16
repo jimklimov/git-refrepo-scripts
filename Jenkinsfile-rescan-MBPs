@@ -48,7 +48,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
             return;
         }
         if ( ! regexSubset.equals("") ) {
-            if ( ! (j.fullName =~ regexSubset ) ) {
+            if ( ! ( j.fullName ==~ regexSubset ) ) {
                 echo "Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
                 return;
             }
