@@ -44,7 +44,7 @@ def parallelSubtasks(String verbose) {
                     echo "Rescanning '${j.fullName}' ..."
                     // Jenkins refuses to "wait" for this type of job...
                     try {
-                        def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: false
+                        def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: true
                     } catch (Exception e) {
                         echo "Failed to trigger scan for ${j.fullName}, skipped"
                     }
@@ -111,5 +111,12 @@ pipeline {
 
 // Non-declarative pipeline (wee needed that for autosetup and params, mostly)
 
-                    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
-                        parallel scan_stages
+scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+try {
+    parallel scan_stages
+} catch (java.io.NotSerializableException e) {
+    echo "Ignoring NotSerializableException"
+} catch (Exception e) {
+    echo "Failed to trigger parallel scans"
+    currentBuild.result = 'FAILED'
+}
