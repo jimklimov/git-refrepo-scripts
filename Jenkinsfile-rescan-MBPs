@@ -105,7 +105,14 @@ pipeline {
         stage('Discover MBP jobs') {
             steps {
                 script {
-                    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+                    try {
+                        scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+                    } catch (java.io.NotSerializableException e) {
+                        echo "Ignoring NotSerializableException during parallelSubtasks()"
+                    } catch (Exception e) {
+                        echo "Failed to trigger parallel scans"
+                        currentBuild.result = 'FAILED'
+                    }
                 } // script clause
             } // steps clause
         }
