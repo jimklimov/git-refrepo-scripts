@@ -85,6 +85,7 @@ pipeline {
                 milestone 1
             } // steps clause
         }
+/*
         stage('Discover MBP jobs') {
             steps {
                 script {
@@ -104,5 +105,11 @@ pipeline {
                 } // script clause
             } // steps clause
         }
+*/
     }
 }
+
+// Non-declarative pipeline (wee needed that for autosetup and params, mostly)
+
+                    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+                        parallel scan_stages
