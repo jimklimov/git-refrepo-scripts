@@ -1,5 +1,16 @@
 #!/usr/bin/env groovy
 
+// Jenkinsfile-rescan-MBPs
+// (C) 2018 by Jim Klimov
+// This Jenkinsfile makes-believe it is a Declarative pipeline for
+// the sake of commonality of our pipeline scripts (build args,
+// various options and stuff), but in fact this is a scripted
+// pipeline most of the way.
+// Its job is to find MultiBranchPipeline items spawned inside an
+// organization folder and issue a rescan request (build operation),
+// so we can detect new or closed PRs and branches quickly (due to
+// JENKINS-49526 MBPs are otherwise polled once a day, hardcoded).
+
 import jenkins.model.*
 import hudson.model.*
 import hudson.util.PersistedList
@@ -57,6 +68,8 @@ def parallelSubtasks(String verbose) {
 }
 
 
+// A declarative pipeline shiny wrapper (we need it
+// for common ways of autosetup and params, mostly)
 pipeline {
     options {
 /*
@@ -85,7 +98,6 @@ pipeline {
                 milestone 1
             } // steps clause
         }
-/*
         stage('Discover MBP jobs') {
             steps {
                 script {
@@ -99,19 +111,21 @@ pipeline {
                     // Unleash hell, (TODO : wait for results)
                     try {
                         parallel scan_stages
+                    } catch (java.io.NotSerializableException e) {
+                        echo "Ignoring NotSerializableException"
                     } catch (Exception e) {
                         echo "Failed to trigger parallel scans"
+                        currentBuild.result = 'FAILED'
                     }
                 } // script clause
             } // steps clause
         }
-*/
     }
 }
 
-// Non-declarative pipeline (wee needed that for autosetup and params, mostly)
-
-scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+/*
+// Non-declarative pipeline payload
+//scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
 try {
     parallel scan_stages
 } catch (java.io.NotSerializableException e) {
@@ -120,3 +134,4 @@ try {
     echo "Failed to trigger parallel scans"
     currentBuild.result = 'FAILED'
 }
+*/
