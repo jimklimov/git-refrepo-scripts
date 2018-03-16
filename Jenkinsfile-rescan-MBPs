@@ -47,6 +47,10 @@ def parallelSubtasks(String verbose) {
             echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and hopefully honours a schedule of its own: ' + j.fullName
             return;
         }
+        if ( j.fullName.contains("SPECIAL/snowflake") ) {
+            echo 'Ignoring MBP JOB which for some reason is rebuilt every time we touch it: ' + j.fullName
+            return;
+        }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
         subbuilds["${j.fullName}"] = {
