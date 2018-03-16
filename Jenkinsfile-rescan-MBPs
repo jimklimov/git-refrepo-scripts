@@ -109,19 +109,29 @@ pipeline {
 // This code below does not work inside a pipeline{} stage{}
 // clause nor in the post{} clause - not even with the added
 // try/catches for exceptions all around.
+// Curiously, when this pipeline job is built by hand
+// or triggered by timer, it fails with lots of CPS and
+// marshalling exception messages in the end. Replaying
+// the same groovy script with no changes just works.
 try {
     echo "DISCOVERING JOBS..."
     scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+} catch (java.io.NotSerializableException e) {
+    echo "Ignoring NotSerializableException during parallelSubtasks()"
+} catch (Exception e) {
+    echo "Failed to find jobs or set up parallel scans"
+    currentBuild.result = 'FAILED'
+    manager.buildAborted()
+}
+
+try {
     echo "SCHEDULING RESCANS..."
     parallel scan_stages
     echo "SCHEDULING OF RESCANS COMPLETED"
 } catch (java.io.NotSerializableException e) {
-    // Curiously, when this pipeline job is built by hand
-    // or triggered by timer, it fails with lots of CPS and
-    // marshalling exception messages in the end. Replaying
-    // the same groovy script with no changes just works.
-    echo "Ignoring NotSerializableException"
+    echo "Ignoring NotSerializableException during parallelized work"
 } catch (Exception e) {
     echo "Failed to trigger parallel scans"
     currentBuild.result = 'FAILED'
+    manager.buildAborted()
 }
