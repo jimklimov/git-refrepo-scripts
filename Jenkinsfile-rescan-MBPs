@@ -95,8 +95,12 @@ pipeline {
         stage('Scan MBP jobs') {
             steps {
                 script {
-                    // Unleash hell, wait for results
-                    parallel scan_stages
+                    // Unleash hell, (TODO : wait for results)
+                    try {
+                        parallel scan_stages
+                    } catch (Exception e) {
+                        echo "Failed to trigger parallel scans"
+                    }
                 } // script clause
             } // steps clause
         }
