@@ -20,7 +20,7 @@ import jenkins.branch.*
 def scan_stages = [:]
 
 @NonCPS
-def parallelSubtasks(String verbose) {
+def parallelSubtasks(String verbose, String regexSubset) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
 
@@ -46,6 +46,12 @@ def parallelSubtasks(String verbose) {
         if ( ! j.fullName.contains("/") ) {
             echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and hopefully honours a schedule of its own: ' + j.fullName
             return;
+        }
+        if ( ! regexSubset.equals("") ) {
+            if ( ! (j.fullName =~ regexSubset ) ) {
+                echo "Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
+                return;
+            }
         }
 /*
         if ( j.fullName.contains("SPECIAL/snowflake") ) {
@@ -101,6 +107,10 @@ pipeline {
             description: 'Print found and skipped items?',
             name: 'JOBLIST_VERBOSE'
         )
+        string (
+            defaultValue: '',
+            description: 'Groovy regex for constraining a list of rescans to schedule (if not empty, then only matching MBP job names are scanned)',
+            name: 'JOBLIST_SUBSET')
     }
     stages {
         stage('Single-exec milestone') {
@@ -121,7 +131,7 @@ pipeline {
 // the same groovy script with no changes just works.
 try {
     echo "DISCOVERING JOBS..."
-    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}" )
+    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelSubtasks()"
 } catch (Exception e) {
