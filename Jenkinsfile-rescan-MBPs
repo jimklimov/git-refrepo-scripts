@@ -44,7 +44,7 @@ def parallelSubtasks(String verbose) {
                     echo "Rescanning '${j.fullName}' ..."
                     // Jenkins refuses to "wait" for this type of job...
                     try {
-                        def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: true
+                        def bbb = build job: "${j.fullName}", quietPeriod: 0, wait: false, propagate: false
                     } catch (Exception e) {
                         echo "Failed to trigger scan for ${j.fullName}, skipped"
                     }
