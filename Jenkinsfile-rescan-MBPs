@@ -105,8 +105,9 @@ pipeline {
                 } // script clause
             } // steps clause
         }
-        stage('Scan MBP jobs') {
-            steps {
+    }
+    post {
+        success {
                 script {
                     // Unleash hell, (TODO : wait for results)
                     try {
@@ -118,8 +119,7 @@ pipeline {
                         currentBuild.result = 'FAILED'
                     }
                 } // script clause
-            } // steps clause
-        }
+        } // success clause
     }
 }
 
