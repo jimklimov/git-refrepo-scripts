@@ -97,7 +97,7 @@ pipeline {
         skipDefaultCheckout true
     }
     triggers {
-        cron('H/15 * * * *')
+        cron('H/30 * * * *')
     }
     agent {label "master||master-real||master-worker"}
     parameters {
