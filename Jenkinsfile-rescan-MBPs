@@ -137,7 +137,7 @@ try {
     echo "DISCOVERING JOBS..."
     scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
 } catch (java.io.NotSerializableException e) {
-    echo "Ignoring NotSerializableException during parallelSubtasks()"
+    echo "Ignoring NotSerializableException during parallelSubtasks(), a groovy/JenkinsDSL thing"
 } catch (Exception e) {
     echo "Failed to find jobs or set up parallel scans"
     currentBuild.result = 'FAILED'
@@ -149,7 +149,7 @@ try {
     parallel scan_stages
     echo "SCHEDULING OF RESCANS COMPLETED"
 } catch (java.io.NotSerializableException e) {
-    echo "Ignoring NotSerializableException during parallelized work"
+    echo "Ignoring NotSerializableException during parallelized work, a groovy/JenkinsDSL thing"
 } catch (Exception e) {
     echo "Failed to trigger parallel scans"
     currentBuild.result = 'FAILED'
