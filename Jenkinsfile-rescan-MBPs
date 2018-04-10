@@ -48,10 +48,15 @@ def parallelSubtasks(String verbose, String regexSubset) {
             return;
         }
         if ( regexSubset.equals("") ) {
+/*
+            // Note: this was not a correct diagnosis. The snowflake job
+            // is rebuit every time we changed the CI repo with this
+            // Jenkinsfile (and compile-web script) as we iterated :)
             if ( j.fullName.contains("SPECIAL/snowflake") ) {
                 echo 'Ignoring MBP JOB which is rebuilt every time we touch it (and/or the secondary SCM repo it fetches is changed): ' + j.fullName
                 return;
             }
+*/
         } else {
             if ( ! ( j.fullName =~ regexSubset ) ) {
                 echo "Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
