@@ -185,7 +185,7 @@ try {
 try {
     if (! git_urls.empty() ) {
         stage('RefRepo') {
-            agent("master-worker") {
+            agent {label "master-worker"} // must run as "gitowner"
             steps {
                 sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
             }
