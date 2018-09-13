@@ -18,13 +18,13 @@ import jenkins.branch.*
 
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
-def git_urls = [:]
+String git_urls = ""
 
 @NonCPS
 def parallelSubtasks(String verbose, String regexSubset) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
-    def git_urls = [:]
+    String git_urls = ""
 
     jobs.each { j ->
         if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
@@ -74,7 +74,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     echo "GitSCM...";
                     try {
                         echo "MBP Job '${j.fullName}' has Git URL '" + scm.remote + "'";
-                        git_urls.add(scm.remote)
+                        git_urls += scm.remote.toString() + " ";
                         gotUrl = true
                     } catch (Exception e0) { throw "Failed scm.remote:"+ e0; }
                 }
@@ -86,7 +86,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
         if (!gotUrl) {
             try {
                 echo "MBP Job '${j.fullName}' has Git URL '" + j.SCMSources[0].remote + "'"
-                git_urls.add(j.SCMSources[0].remote)
+                git_urls += j.SCMSources[0].remote.toString() + " ";
                 gotUrl = true
             } catch (Exception e2) {
                 echo "Failed to research SCM URL for '${j.fullName}' (way2): " + e2
@@ -177,7 +177,7 @@ try {
 }
 
 try {
-    if (git_urls.size() > 0 ) {
+    if ( !git_urls.empty() ) {
         stage('RefRepo') {
             agent {label "master-worker"} // must run as "gitowner"
             steps {
