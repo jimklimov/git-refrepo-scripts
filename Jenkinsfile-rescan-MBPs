@@ -18,6 +18,7 @@ import jenkins.branch.*
 
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
+def git_urls = [:]
 
 @NonCPS
 def parallelSubtasks(String verbose, String regexSubset) {
@@ -64,6 +65,43 @@ def parallelSubtasks(String verbose, String regexSubset) {
             }
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
+
+        try {
+            for (scm in j.SCMSources) {
+                if(scm instanceof hudson.plugins.git.GitSCM ) {
+                    echo "GitSCM...";
+                    try {
+                        echo "MBP Job '${j.fullName}' has Git URL '" + scm.remote + "'";
+                        git_urls += "${scm.remote}"
+                    } catch (Exception e) { throw "Failed scm.remote:"+ e; }
+                }
+            }
+        } catch (Exception e) {
+            echo "Failed to research SCM URL for '${j.fullName} (way1)': " + e
+            try {
+                echo "MBP Job '${j.fullName}' has Git URL '" + j.SCMSources[0].remote + "'"
+                git_urls += "${j.SCMSources[0].remote}"
+            } catch (Exception e) {
+                echo "Failed to research SCM URL for '${j.fullName}' (way2): " + e
+                try {
+                    if ( j.scm instanceof hudson.plugins.git.GitSCM ) {
+                        echo "MBP Job '${j.fullName}' has Git URL '" + j.scm.remote + "'";
+                        git_urls += "${j.scm.remote}"
+                    }
+                } catch (Exception e) {
+                    echo "Failed to research SCM URL for '${j.fullName} (way3)': " + e
+                    try {
+                        if ( j.scm instanceof hudson.plugins.git.GitSCM ) {
+                            echo "MBP Job '${j.fullName}' has Git URL '" + j.scm.url + "'";
+                            git_urls += "${j.scm.url}"
+                        }
+                    } catch (Exception e) {
+                        echo "Failed to research SCM URL for '${j.fullName} (way4)': " + e
+                }
+                }
+            }
+        }
+
 
         subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
@@ -142,6 +180,21 @@ try {
     echo "Failed to find jobs or set up parallel scans"
     currentBuild.result = 'FAILED'
     manager.buildAborted()
+}
+
+try {
+    if (! git_urls.empty() ) {
+        stage('RefRepo') {
+            agent("master-worker") {
+            steps {
+                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+            }
+        }
+    } else {
+        echo "SKIP to register Git URLs with git reference repo : list seems empty"
+    }
+} catch (Exception e) {
+    echo "Failed to register Git URLs with git reference repo"
 }
 
 try {
