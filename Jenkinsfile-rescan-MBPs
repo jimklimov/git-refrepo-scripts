@@ -76,15 +76,15 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         echo "MBP Job '${j.fullName}' has Git URL '" + scm.remote + "'";
                         git_urls += scm.remote.toString() + " ";
                         gotUrl = true
-                    } catch (Exception e0) { throw "Failed scm.remote: "+ e0; }
-                }
+                    } catch (Exception e0) { echo "Failed scm.remote: " + e0; throw e0; }
+                } else
                 if (scm instanceof com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource) {
                     echo "BitbucketSCM...";
                     try {
                         echo "MBP Job '${j.fullName}' has Git URL '" + scm.getRepository() + "'";
                         git_urls += scm.getRepository().toString() + " ";
                         gotUrl = true
-                    } catch (Exception e0b) { throw "Failed scm.getRepository(): "+ e0b; }
+                    } catch (Exception e0b) { echo "Failed scm.getRepository(): " + e0b; throw e0b; }
                 }
             }
         } catch (Exception e1) {
