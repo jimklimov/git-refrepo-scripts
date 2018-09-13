@@ -74,13 +74,13 @@ def parallelSubtasks(String verbose, String regexSubset) {
                 if (scm instanceof hudson.plugins.git.GitSCM) {
                     echo "GitSCM...";
                     try {
-                        url = scm.remote.toString();
+                        url = scm.remote
                     } catch (Exception e0) { echo "Failed scm.remote: " + e0; throw e0; }
                 } else
                 if (scm instanceof com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource) {
                     echo "BitbucketSCM...";
                     try {
-                        url = scm.getRepository().toString();
+                        url = scm.getRepository().toString()
                     } catch (Exception e0b) { echo "Failed scm.getRepository(): " + e0b; throw e0b; }
                 }
 
