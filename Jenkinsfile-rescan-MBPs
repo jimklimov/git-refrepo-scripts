@@ -18,12 +18,13 @@ import jenkins.branch.*
 
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
-def git_urls = []
+def git_urls = [:]
 
 @NonCPS
 def parallelSubtasks(String verbose, String regexSubset) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
+    def git_urls = [:]
 
     jobs.each { j ->
         if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
@@ -66,42 +67,35 @@ def parallelSubtasks(String verbose, String regexSubset) {
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
+        def gotUrl = false
         try {
             for (scm in j.SCMSources) {
                 if(scm instanceof hudson.plugins.git.GitSCM ) {
                     echo "GitSCM...";
                     try {
                         echo "MBP Job '${j.fullName}' has Git URL '" + scm.remote + "'";
-                        git_urls += "${scm.remote}"
+                        git_urls.add(scm.remote)
+                        gotUrl = true
                     } catch (Exception e0) { throw "Failed scm.remote:"+ e0; }
                 }
             }
         } catch (Exception e1) {
             echo "Failed to research SCM URL for '${j.fullName} (way1)': " + e1
+        }
+
+        if (!gotUrl) {
             try {
                 echo "MBP Job '${j.fullName}' has Git URL '" + j.SCMSources[0].remote + "'"
-                git_urls += "${j.SCMSources[0].remote}"
+                git_urls.add(j.SCMSources[0].remote)
+                gotUrl = true
             } catch (Exception e2) {
                 echo "Failed to research SCM URL for '${j.fullName}' (way2): " + e2
-                try {
-                    if ( j.scm instanceof hudson.plugins.git.GitSCM ) {
-                        echo "MBP Job '${j.fullName}' has Git URL '" + j.scm.remote + "'";
-                        git_urls += "${j.scm.remote}"
-                    }
-                } catch (Exception e3) {
-                    echo "Failed to research SCM URL for '${j.fullName} (way3)': " + e3
-                    try {
-                        if ( j.scm instanceof hudson.plugins.git.GitSCM ) {
-                            echo "MBP Job '${j.fullName}' has Git URL '" + j.scm.url + "'";
-                            git_urls += "${j.scm.url}"
-                        }
-                    } catch (Exception e4) {
-                        echo "Failed to research SCM URL for '${j.fullName} (way4)': " + e4
-                }
-                }
             }
         }
 
+        if (!gotUrl) {
+            echo "SKIP: Failed to find SCM URL for '${j.fullName}'"
+        }
 
         subbuilds["${j.fullName}"] = {
             stage("Scan ${j.fullName}") {
@@ -122,7 +116,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
 
     } // jobs.each() clause
 
-    return subbuilds
+    return [subbuilds, git_urls]
 }
 
 
@@ -173,7 +167,7 @@ pipeline {
 // the same groovy script with no changes just works.
 try {
     echo "DISCOVERING JOBS..."
-    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
+    (scan_stages, git_urls) = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelSubtasks(), a groovy/JenkinsDSL thing"
 } catch (Exception e) {
