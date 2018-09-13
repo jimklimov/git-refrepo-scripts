@@ -149,7 +149,7 @@ pipeline {
     triggers {
         cron('H/30 * * * *')
     }
-//    agent {label "master||master-real||master-worker"}
+    agent {label "master||master-real||master-worker"}
     agent {label "master-worker"} // shell part must run as "gitowner"
     parameters {
         booleanParam (
@@ -192,8 +192,10 @@ try {
 
 try {
     if ( !git_urls.equals("") ) {
-        stage('RefRepo') {
-            sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+        node("master-worker") { // shell part must run as "gitowner"
+            stage('RefRepo') {
+                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+            }
         }
     } else {
         echo "SKIP to register Git URLs with git reference repo : list seems empty"
