@@ -18,7 +18,7 @@ import jenkins.branch.*
 
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
-def git_urls = [:]
+def git_urls = []
 
 @NonCPS
 def parallelSubtasks(String verbose, String regexSubset) {
@@ -177,13 +177,13 @@ try {
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelSubtasks(), a groovy/JenkinsDSL thing"
 } catch (Exception e) {
-    echo "Failed to find jobs or set up parallel scans"
+    echo "Failed to find jobs or set up parallel scans: " + e
     currentBuild.result = 'FAILED'
     manager.buildAborted()
 }
 
 try {
-    if (! git_urls.empty() ) {
+    if (git_urls.size() > 0 ) {
         stage('RefRepo') {
             agent {label "master-worker"} // must run as "gitowner"
             steps {
@@ -194,7 +194,7 @@ try {
         echo "SKIP to register Git URLs with git reference repo : list seems empty"
     }
 } catch (Exception e) {
-    echo "Failed to register Git URLs with git reference repo"
+    echo "Failed to register Git URLs with git reference repo: " + e
 }
 
 try {
@@ -204,7 +204,7 @@ try {
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelized work, a groovy/JenkinsDSL thing"
 } catch (Exception e) {
-    echo "Failed to trigger parallel scans"
+    echo "Failed to trigger parallel scans: " + e
     currentBuild.result = 'FAILED'
     manager.buildAborted()
 }
