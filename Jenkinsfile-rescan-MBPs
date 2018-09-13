@@ -188,9 +188,7 @@ try {
 try {
     if ( !git_urls.equals("") ) {
         stage('RefRepo') {
-            steps {
-                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
-            }
+            sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
         }
     } else {
         echo "SKIP to register Git URLs with git reference repo : list seems empty"
