@@ -73,30 +73,30 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     try {
                         echo "MBP Job '${j.fullName}' has Git URL '" + scm.remote + "'";
                         git_urls += "${scm.remote}"
-                    } catch (Exception e) { throw "Failed scm.remote:"+ e; }
+                    } catch (Exception e0) { throw "Failed scm.remote:"+ e0; }
                 }
             }
-        } catch (Exception e) {
-            echo "Failed to research SCM URL for '${j.fullName} (way1)': " + e
+        } catch (Exception e1) {
+            echo "Failed to research SCM URL for '${j.fullName} (way1)': " + e1
             try {
                 echo "MBP Job '${j.fullName}' has Git URL '" + j.SCMSources[0].remote + "'"
                 git_urls += "${j.SCMSources[0].remote}"
-            } catch (Exception e) {
-                echo "Failed to research SCM URL for '${j.fullName}' (way2): " + e
+            } catch (Exception e2) {
+                echo "Failed to research SCM URL for '${j.fullName}' (way2): " + e2
                 try {
                     if ( j.scm instanceof hudson.plugins.git.GitSCM ) {
                         echo "MBP Job '${j.fullName}' has Git URL '" + j.scm.remote + "'";
                         git_urls += "${j.scm.remote}"
                     }
-                } catch (Exception e) {
-                    echo "Failed to research SCM URL for '${j.fullName} (way3)': " + e
+                } catch (Exception e3) {
+                    echo "Failed to research SCM URL for '${j.fullName} (way3)': " + e3
                     try {
                         if ( j.scm instanceof hudson.plugins.git.GitSCM ) {
                             echo "MBP Job '${j.fullName}' has Git URL '" + j.scm.url + "'";
                             git_urls += "${j.scm.url}"
                         }
-                    } catch (Exception e) {
-                        echo "Failed to research SCM URL for '${j.fullName} (way4)': " + e
+                    } catch (Exception e4) {
+                        echo "Failed to research SCM URL for '${j.fullName} (way4)': " + e4
                 }
                 }
             }
