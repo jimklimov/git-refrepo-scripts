@@ -144,7 +144,8 @@ pipeline {
     triggers {
         cron('H/30 * * * *')
     }
-    agent {label "master||master-real||master-worker"}
+//    agent {label "master||master-real||master-worker"}
+    agent {label "master-worker"} // shell part must run as "gitowner"
     parameters {
         booleanParam (
             defaultValue: false,
@@ -187,7 +188,6 @@ try {
 try {
     if ( !git_urls.equals("") ) {
         stage('RefRepo') {
-            agent {label "master-worker"} // must run as "gitowner"
             steps {
                 sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
             }
