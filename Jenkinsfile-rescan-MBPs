@@ -150,7 +150,6 @@ pipeline {
         cron('H/30 * * * *')
     }
     agent {label "master||master-real||master-worker"}
-    agent {label "master-worker"} // shell part must run as "gitowner"
     parameters {
         booleanParam (
             defaultValue: false,
