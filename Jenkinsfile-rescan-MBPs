@@ -70,21 +70,26 @@ def parallelSubtasks(String verbose, String regexSubset) {
         def gotUrl = false
         try {
             for (scm in j.SCMSources) {
+                String url = ""
                 if (scm instanceof hudson.plugins.git.GitSCM) {
                     echo "GitSCM...";
                     try {
-                        echo "MBP Job '${j.fullName}' has Git URL '" + scm.remote + "'";
-                        git_urls += scm.remote.toString() + " ";
-                        gotUrl = true
+                        url = scm.remote.toString();
                     } catch (Exception e0) { echo "Failed scm.remote: " + e0; throw e0; }
                 } else
                 if (scm instanceof com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource) {
                     echo "BitbucketSCM...";
                     try {
-                        echo "MBP Job '${j.fullName}' has Git URL '" + scm.getRepository() + "'";
-                        git_urls += scm.getRepository().toString() + " ";
-                        gotUrl = true
+                        url = scm.getRepository().toString();
                     } catch (Exception e0b) { echo "Failed scm.getRepository(): " + e0b; throw e0b; }
+                }
+
+                if ( url.contains("://") ) {
+                    echo "MBP Job '${j.fullName}' has Git URL '" + url + "'";
+                    git_urls += url + " ";
+                    gotUrl = true
+                } else {
+                    echo "SKIP (way1): MBP Job '${j.fullName}' has invalid URL: '" + url + "'";
                 }
             }
         } catch (Exception e1) {
