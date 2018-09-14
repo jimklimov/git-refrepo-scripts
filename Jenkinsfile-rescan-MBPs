@@ -31,6 +31,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
     String git_urls = ""
+    def candidateurls = [:]
 
     jobs.each { j ->
         if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
@@ -64,7 +65,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         echo "No supported SCM source variable found: " + eSCMsrc;
                     }
                 }
-            }
+            } // See if we have any scmsrc's
 
             if (scmsrc.size() >0)
             for (scm in scmsrc) {
@@ -79,14 +80,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         for (int i = 0; i < CfgList.size(); ++i) {
                             try {
                                 url = CfgList.get(i).getUrl();
-                                if ( url.startsWith("git@") ) { url = "ssh://" + url; }
-                                if ( url.contains("://") ) {
-                                    echo "MBP Job '${j.fullName}' has Git URL '" + url + "'";
-                                    git_urls += url + " ";
-                                    gotUrl = true
-                                } else {
-                                    echo "SKIP: MBP Job '${j.fullName}' has invalid URL: '" + url + "'";
-                                }
+                                candidateurls["${url}"] += "${j.fullName} ";
                             } catch (Exception e0g0) { echo "SKIP: Failed scm.getUserRemoteConfigs().get().getUrl() #" + i + " : " + e0g0; }
                         }
                         continue; // This "scm" instance is fully processed
@@ -118,16 +112,9 @@ def parallelSubtasks(String verbose, String regexSubset) {
                 } else {
                     echo "WARNING : SCMSources type not supported in MBP Job '${j.fullName}'"
                 }
+                candidateurls["${url}"] += "${j.fullName} ";
+            } // Find candidateurl's in discovered scmsrc's
 
-                if ( url.startsWith("git@") ) { url = "ssh://" + url; }
-                if ( url.contains("://") ) {
-                    echo "MBP Job '${j.fullName}' has Git URL '" + url + "'";
-                    git_urls += url + " ";
-                    gotUrl = true
-                } else {
-                    echo "SKIP: MBP Job '${j.fullName}' has invalid URL: '" + url + "'";
-                }
-            }
         } catch (Exception e1) {
             echo "Failed to research SCM URL for '${j.fullName}' : " + e1
         }
@@ -183,6 +170,18 @@ def parallelSubtasks(String verbose, String regexSubset) {
         } // end of def subbuilds[j.fullName]
 
     } // jobs.each() clause
+
+    if (candidateurls.size() >0)
+    candidateurls.each { url, jobnames ->
+        if ( url.startsWith("git@") ) { url = "ssh://" + url; }
+        if ( url.contains("://") ) {
+            echo "MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
+            git_urls += url + " ";
+            gotUrl = true
+        } else {
+            echo "SKIP: MBP Job(s) '${jobnames}' have invalid URL: '" + url + "'";
+        }
+    } // Populate git_urls string with unique URLs for discovered jobs (if any)
 
     return [subbuilds, git_urls]
 }
