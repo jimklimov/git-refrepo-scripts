@@ -129,11 +129,11 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         def repon = scm.getRepository()
                         def repou = scm.getServerUrl()
                         if (verbose.equals("true")) {
-                            echo "O='${repoo}' N='${repon}' U='${repou}'"
+                            echo "U='${repou}' O='${repoo}' N='${repon}'"
                         }
 // Alas, there seems to be no good easy method to just get the URL (SSH or HTTP)
 //                        url = scm.getRemote( repoo, repon )
-                        url = "${repou}/scm/${repon}/${repoo}.git"
+                        url = "${repou}/scm/${repoo}/${repon}.git"
                         gotUrl = true
                     } catch (Exception e0b) { echo "Failed scm.getRepository(): " + e0b; throw e0b; }
                 } else {
