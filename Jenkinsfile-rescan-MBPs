@@ -117,21 +117,11 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     git_urls += url + " ";
                     gotUrl = true
                 } else {
-                    echo "SKIP (way1): MBP Job '${j.fullName}' has invalid URL: '" + url + "'";
+                    echo "SKIP: MBP Job '${j.fullName}' has invalid URL: '" + url + "'";
                 }
             }
         } catch (Exception e1) {
-            echo "Failed to research SCM URL for '${j.fullName} (way1)': " + e1
-        }
-
-        if (!gotUrl) {
-            try {
-                echo "MBP Job '${j.fullName}' has Git URL '" + j.SCMSources[0].remote + "'"
-                git_urls += j.SCMSources[0].remote.toString() + " ";
-                gotUrl = true
-            } catch (Exception e2) {
-                echo "Failed to research SCM URL for '${j.fullName}' (way2): " + e2
-            }
+            echo "Failed to research SCM URL for '${j.fullName}' : " + e1
         }
 
         if (!gotUrl) {
