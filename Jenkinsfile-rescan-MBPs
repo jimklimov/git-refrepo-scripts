@@ -142,8 +142,10 @@ def parallelSubtasks(String verbose, String regexSubset) {
         }
 
         if (!gotUrl) {
-            if (j.buildable)
-                echo "SKIP-URL: Failed to find any SCM URL for buildable job '${j.fullName}'"
+            try {
+                if (j.buildable)
+                    echo "SKIP-URL: Failed to find any SCM URL for buildable job '${j.fullName}'"
+            } catch (Exception e) { }
         }
 
 
