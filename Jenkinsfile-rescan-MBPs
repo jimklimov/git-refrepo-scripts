@@ -46,6 +46,12 @@ def parallelSubtasks(String verbose, String regexSubset) {
             }
             return
         }
+        if (j instanceof com.cloudbees.hudson.plugins.folder.computed.ComputedFolder) {
+            if (verbose.equals("true")) {
+                echo 'SKIP-REINDEX+URL: Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.computed.ComputedFolder : ' + j.fullName
+            }
+            return
+        }
 
         if ( regexSubset.equals("") ) {
 /*
