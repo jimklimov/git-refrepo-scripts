@@ -100,7 +100,13 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     try {
                         def repoo = scm.getRepoOwner()
                         def repon = scm.getRepository()
-                        url = scm.getRemote( repoo, repon )
+                        def repou = scm.getServerUrl()
+                        if (verbose.equals("true")) {
+                            echo "O='${repoo}' N='${repon}' U='${repou}'"
+                        }
+// Alas, there seems to be no good easy method to just get the URL (SSH or HTTP)
+//                        url = scm.getRemote( repoo, repon )
+                        url = "${repou}/scm/${repon}/${repoo}.git"
                     } catch (Exception e0b) { echo "Failed scm.getRepository(): " + e0b; throw e0b; }
                 } else {
                     echo "WARNING : SCMSources type not supported in MBP Job '${j.fullName}'"
