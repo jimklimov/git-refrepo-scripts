@@ -47,6 +47,23 @@ def parallelSubtasks(String verbose, String regexSubset) {
             return
         }
 
+        if ( regexSubset.equals("") ) {
+/*
+            // Note: this was not a correct diagnosis. The snowflake job
+            // is rebuit every time we changed the CI repo with this
+            // Jenkinsfile (and compile-web script) as we iterated :)
+            if ( j.fullName.contains("SPECIAL/snowflake") ) {
+                echo 'Ignoring MBP JOB which is rebuilt every time we touch it (and/or the secondary SCM repo it fetches is changed): ' + j.fullName
+                return;
+            }
+*/
+        } else {
+            if ( ! ( j.fullName =~ regexSubset ) ) {
+                echo "Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
+                return;
+            }
+        }
+
         // Determine Git URL for any build job, not only MBPs
         def gotUrl = false
         try {
@@ -133,22 +150,6 @@ def parallelSubtasks(String verbose, String regexSubset) {
         if ( ! j.fullName.contains("/") ) {
             echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and hopefully honours a schedule of its own: ' + j.fullName
             return;
-        }
-        if ( regexSubset.equals("") ) {
-/*
-            // Note: this was not a correct diagnosis. The snowflake job
-            // is rebuit every time we changed the CI repo with this
-            // Jenkinsfile (and compile-web script) as we iterated :)
-            if ( j.fullName.contains("SPECIAL/snowflake") ) {
-                echo 'Ignoring MBP JOB which is rebuilt every time we touch it (and/or the secondary SCM repo it fetches is changed): ' + j.fullName
-                return;
-            }
-*/
-        } else {
-            if ( ! ( j.fullName =~ regexSubset ) ) {
-                echo "Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
-                return;
-            }
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
 
