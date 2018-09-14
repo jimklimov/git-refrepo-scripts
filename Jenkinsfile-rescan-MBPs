@@ -79,6 +79,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         for (int i = 0; i < CfgList.size(); ++i) {
                             try {
                                 url = CfgList.get(i).getUrl();
+                                if ( url.startsWith("git@") ) { url = "ssh://" + url; }
                                 if ( url.contains("://") ) {
                                     echo "MBP Job '${j.fullName}' has Git URL '" + url + "'";
                                     git_urls += url + " ";
@@ -118,6 +119,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     echo "WARNING : SCMSources type not supported in MBP Job '${j.fullName}'"
                 }
 
+                if ( url.startsWith("git@") ) { url = "ssh://" + url; }
                 if ( url.contains("://") ) {
                     echo "MBP Job '${j.fullName}' has Git URL '" + url + "'";
                     git_urls += url + " ";
