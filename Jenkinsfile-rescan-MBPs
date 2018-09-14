@@ -49,12 +49,24 @@ def parallelSubtasks(String verbose, String regexSubset) {
         // Determine Git URL for any build job, not only MBPs
         def gotUrl = false
         try {
+            if (verbose.equals("true")) {
+                echo "Analyzing Git URL for job '${j.fullName}' ..."
+            }
+
             def scmsrc = []
             if (j instanceof org.jenkinsci.plugins.workflow.job.WorkflowJob) {
                 scmsrc = j.getSCMs()
             } else {
-                scmsrc = j.SCMSources
+                try {
+                    scmsrc = j.SCMSources
+                } catch (Exception eSCMsrc) {
+                    if (verbose.equals("true")) {
+                        echo "No supported SCM source variable found: " + eSCMsrc;
+                    }
+                }
             }
+
+            if (scmsrc.size() >0)
             for (scm in scmsrc) {
                 String url = ""
                 if (scm instanceof hudson.plugins.git.GitSCM) {
@@ -62,8 +74,22 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         echo "GitSCM...";
                     }
                     try {
-                        url = scm.remote
-                    } catch (Exception e0g) { echo "Failed scm.remote: " + e0g; throw e0g; }
+                        // Inspired by https://github.com/jenkinsci/git-plugin/blob/master/src/main/java/hudson/plugins/git/GitSCM.java#L256
+                        def CfgList = scm.getUserRemoteConfigs()
+                        for (int i = 0; i < CfgList.size(); ++i) {
+                            try {
+                                url = CfgList.get(i).getUrl();
+                                if ( url.contains("://") ) {
+                                    echo "MBP Job '${j.fullName}' has Git URL '" + url + "'";
+                                    git_urls += url + " ";
+                                    gotUrl = true
+                                } else {
+                                    echo "SKIP: MBP Job '${j.fullName}' has invalid URL: '" + url + "'";
+                                }
+                            } catch (Exception e0g0) { echo "SKIP: Failed scm.getUserRemoteConfigs().get().getUrl() #" + i + " : " + e0g0; }
+                        }
+                        continue; // This "scm" instance is fully processed
+                    } catch (Exception e0g) { echo "Failed scm.getUserRemoteConfigs().get().getUrl(): " + e0g; throw e0g; }
                 } else
                 if (scm instanceof org.jenkinsci.plugins.github_branch_source.GitHubSCMSource) {
                     if (verbose.equals("true")) {
