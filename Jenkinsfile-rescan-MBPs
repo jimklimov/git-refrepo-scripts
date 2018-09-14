@@ -36,13 +36,13 @@ def parallelSubtasks(String verbose, String regexSubset) {
     jobs.each { j ->
         if (j instanceof com.cloudbees.hudson.plugins.folder.Folder) {
             if (verbose.equals("true")) {
-                echo 'Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
+                echo 'SKIP-REINDEX+URL: Ignoring JOB which is a com.cloudbees.hudson.plugins.folder.Folder : ' + j.fullName
             }
             return
         }
         if (j instanceof jenkins.branch.OrganizationFolder) {
             if (verbose.equals("true")) {
-                echo 'Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
+                echo 'SKIP-REINDEX+URL: Ignoring JOB which is a jenkins.branch.OrganizationFolder : ' + j.fullName
             }
             return
         }
@@ -53,13 +53,13 @@ def parallelSubtasks(String verbose, String regexSubset) {
             // is rebuit every time we changed the CI repo with this
             // Jenkinsfile (and compile-web script) as we iterated :)
             if ( j.fullName.contains("SPECIAL/snowflake") ) {
-                echo 'Ignoring MBP JOB which is rebuilt every time we touch it (and/or the secondary SCM repo it fetches is changed): ' + j.fullName
+                echo 'SKIP-REINDEX+URL: Ignoring MBP JOB which is rebuilt every time we touch it (and/or the secondary SCM repo it fetches is changed): ' + j.fullName
                 return;
             }
 */
         } else {
             if ( ! ( j.fullName =~ regexSubset ) ) {
-                echo "Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
+                echo "SKIP-REINDEX+URL: Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
                 return;
             }
         }
@@ -100,7 +100,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                                 if ( !candidateurls["${url}"] ) candidateurls["${url}"] = "";
                                 candidateurls["${url}"] += "${j.fullName} ";
                                 gotUrl = true
-                            } catch (Exception e0g0) { echo "SKIP: Failed scm.getUserRemoteConfigs().get().getUrl() #" + i + " : " + e0g0; }
+                            } catch (Exception e0g0) { echo "SKIP-URL: Failed scm.getUserRemoteConfigs().get().getUrl() #" + i + " : " + e0g0; }
                         }
                         continue; // This "scm" instance is fully processed
                     } catch (Exception e0g) { echo "Failed scm.getUserRemoteConfigs().get().getUrl(): " + e0g; throw e0g; }
@@ -138,22 +138,22 @@ def parallelSubtasks(String verbose, String regexSubset) {
             } // Find candidateurl's in discovered scmsrc's
 
         } catch (Exception e1) {
-            echo "Failed to research SCM URL for '${j.fullName}' : " + e1
+            echo "SKIP-URL: Failed to research SCM URL for '${j.fullName}' : " + e1
         }
 
         if (!gotUrl) {
-            echo "SKIP: Failed to find any SCM URL for '${j.fullName}'"
+            echo "SKIP-URL: Failed to find any SCM URL for '${j.fullName}'"
         }
 
 
         if (! (j instanceof org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject) ) {
             if (verbose.equals("true")) {
-                echo 'Ignoring JOB which is not an MBP: ' + j.fullName
+                echo 'SKIP-REINDEX: Ignoring JOB which is not an MBP: ' + j.fullName
             }
             return;
         }
         if ( ! j.fullName.contains("/") ) {
-            echo 'Ignoring MBP JOB which is not under a (organization) folder, so has and hopefully honours a schedule of its own: ' + j.fullName
+            echo 'SKIP-REINDEX: Ignoring MBP JOB which is not under a (organization) folder, so has and hopefully honours a schedule of its own: ' + j.fullName
             return;
         }
         // TODO: Determine that MBP's schedule and only fire below if it is "once a day" (hardcoded)?
@@ -182,10 +182,10 @@ def parallelSubtasks(String verbose, String regexSubset) {
         if ( url.startsWith("git@") ) { url = "ssh://" + url; }
         if ( url.contains("://") ) {
             if (verbose.equals("true"))
-                echo "MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
+                echo "GIT-URL: MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
             git_urls += url + " ";
         } else {
-            echo "SKIP: MBP Job(s) '${jobnames}' have invalid URL: '" + url + "'";
+            echo "SKIP-URL: MBP Job(s) '${jobnames}' have invalid URL: '" + url + "'";
         }
     } // Populate git_urls string with unique URLs for discovered jobs (if any)
 
