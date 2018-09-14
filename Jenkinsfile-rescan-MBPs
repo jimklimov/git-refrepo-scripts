@@ -98,6 +98,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                             try {
                                 url = CfgList.get(i).getUrl();
                                 candidateurls["${url}"] += "${j.fullName} ";
+                                gotUrl = true
                             } catch (Exception e0g0) { echo "SKIP: Failed scm.getUserRemoteConfigs().get().getUrl() #" + i + " : " + e0g0; }
                         }
                         continue; // This "scm" instance is fully processed
@@ -109,6 +110,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     }
                     try {
                         url = scm.remote
+                        gotUrl = true
                     } catch (Exception e0gh) { echo "Failed scm.remote: " + e0hg; throw e0gh; }
                 } else
                 if (scm instanceof com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource) {
@@ -125,6 +127,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
 // Alas, there seems to be no good easy method to just get the URL (SSH or HTTP)
 //                        url = scm.getRemote( repoo, repon )
                         url = "${repou}/scm/${repon}/${repoo}.git"
+                        gotUrl = true
                     } catch (Exception e0b) { echo "Failed scm.getRepository(): " + e0b; throw e0b; }
                 } else {
                     echo "WARNING : SCMSources type not supported in MBP Job '${j.fullName}'"
@@ -178,7 +181,6 @@ def parallelSubtasks(String verbose, String regexSubset) {
         if ( url.contains("://") ) {
             echo "MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
             git_urls += url + " ";
-            gotUrl = true
         } else {
             echo "SKIP: MBP Job(s) '${jobnames}' have invalid URL: '" + url + "'";
         }
