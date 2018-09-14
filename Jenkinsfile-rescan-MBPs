@@ -78,19 +78,25 @@ def parallelSubtasks(String verbose, String regexSubset) {
             for (scm in j.SCMSources) {
                 String url = ""
                 if (scm instanceof hudson.plugins.git.GitSCM) {
-                    echo "GitSCM...";
+                    if (verbose.equals("true")) {
+                        echo "GitSCM...";
+                    }
                     try {
                         url = scm.remote
                     } catch (Exception e0g) { echo "Failed scm.remote: " + e0; throw e0g; }
                 } else
                 if (scm instanceof org.jenkinsci.plugins.github_branch_source.GitHubSCMSource) {
-                    echo "GitHubSCM...";
+                    if (verbose.equals("true")) {
+                        echo "GitHubSCM...";
+                    }
                     try {
                         url = scm.remote
                     } catch (Exception e0g) { echo "Failed scm.remote: " + e0; throw e0g; }
                 } else
                 if (scm instanceof com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource) {
-                    echo "BitbucketSCM...";
+                    if (verbose.equals("true")) {
+                        echo "BitbucketSCM...";
+                    }
                     try {
                         def repoo = scm.getRepoOwner()
                         def repon = scm.getRepository()
