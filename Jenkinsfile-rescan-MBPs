@@ -11,6 +11,12 @@
 // so we can detect new or closed PRs and branches quickly (due to
 // JENKINS-49526 MBPs are otherwise polled once a day, hardcoded).
 
+// Note: A lot of methods below must be approved by Jenkins admin
+// To do that, "replay" the job and edit the script in Web-GUI to
+// remove try lines and catch blocks, and replay it time and again
+// until all method signatures have been submitted for approval and
+// approved in $JENKINS_URL/scriptApproval/ by an admin, one by one.
+
 import jenkins.model.*
 import hudson.model.*
 import hudson.util.PersistedList
