@@ -97,6 +97,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         for (int i = 0; i < CfgList.size(); ++i) {
                             try {
                                 url = CfgList.get(i).getUrl();
+                                if ( !candidateurls["${url}"] ) candidateurls["${url}"] = "";
                                 candidateurls["${url}"] += "${j.fullName} ";
                                 gotUrl = true
                             } catch (Exception e0g0) { echo "SKIP: Failed scm.getUserRemoteConfigs().get().getUrl() #" + i + " : " + e0g0; }
@@ -132,6 +133,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                 } else {
                     echo "WARNING : SCMSources type not supported in MBP Job '${j.fullName}'"
                 }
+                if ( !candidateurls["${url}"] ) candidateurls["${url}"] = "";
                 candidateurls["${url}"] += "${j.fullName} ";
             } // Find candidateurl's in discovered scmsrc's
 
