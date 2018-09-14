@@ -181,7 +181,8 @@ def parallelSubtasks(String verbose, String regexSubset) {
     candidateurls.each { url, jobnames ->
         if ( url.startsWith("git@") ) { url = "ssh://" + url; }
         if ( url.contains("://") ) {
-            echo "MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
+            if (verbose.equals("true"))
+                echo "MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
             git_urls += url + " ";
         } else {
             echo "SKIP: MBP Job(s) '${jobnames}' have invalid URL: '" + url + "'";
