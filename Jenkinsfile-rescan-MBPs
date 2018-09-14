@@ -63,7 +63,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     }
                     try {
                         url = scm.remote
-                    } catch (Exception e0g) { echo "Failed scm.remote: " + e0; throw e0g; }
+                    } catch (Exception e0g) { echo "Failed scm.remote: " + e0g; throw e0g; }
                 } else
                 if (scm instanceof org.jenkinsci.plugins.github_branch_source.GitHubSCMSource) {
                     if (verbose.equals("true")) {
@@ -71,7 +71,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
                     }
                     try {
                         url = scm.remote
-                    } catch (Exception e0g) { echo "Failed scm.remote: " + e0; throw e0g; }
+                    } catch (Exception e0gh) { echo "Failed scm.remote: " + e0hg; throw e0gh; }
                 } else
                 if (scm instanceof com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource) {
                     if (verbose.equals("true")) {
