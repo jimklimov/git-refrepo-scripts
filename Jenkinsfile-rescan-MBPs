@@ -80,6 +80,8 @@ def parallelSubtasks(String verbose, String regexSubset) {
                 } catch (Exception eSCMsrc) {
                     if (verbose.equals("true")) {
                         echo "No supported SCM source variable found: " + eSCMsrc;
+// TODO: Support legacy jobs, they should have SCM's too:
+// No supported SCM source variable found: groovy.lang.MissingPropertyException: No such property: SCMSources for class: hudson.model.FreeStyleProject
                     }
                 }
             } // See if we have any scmsrc's
