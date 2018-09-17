@@ -24,6 +24,7 @@ import jenkins.branch.*
 
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
+String git_urls = ""
 
 @NonCPS
 def parallelSubtasks(String verbose, String regexSubset) {
@@ -201,31 +202,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
         }
     } // Populate git_urls string with unique URLs for discovered jobs (if any)
 
-    if ( git_urls.equals("") ) {
-        echo "SKIP to register Git URLs with git reference repo : list seems empty"
-    } else {
-        subbuilds["Update RefRepo Config"] = {
-//            node("master-worker") { // shell part must run as "gitowner"
-                stage("Update Git Reference repo pointers") {
-                    try {
-                    // The update script by itself is quite fast, but its
-                    // startup can be blocked by other copies running or
-                    // NFS server unavailability. Timing out allows the
-                    // rescans to still happen, and try/catch block makes it
-                    // non-fatal as it is not a big issue to register later.
-                        timeout (time: 5, unit: 'MINUTES') {
-//                            sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
-                            sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-                        }
-                    } catch (Exception e) {
-                        echo "SKIP : Failed to register Git URLs with git reference repo, can try with a later re-run: " + e
-                    }
-                }
-//            }
-        }
-    }
-
-    return subbuilds
+    return [subbuilds, git_urls]
 }
 
 
@@ -276,7 +253,7 @@ pipeline {
 // the same groovy script with no changes just works.
 try {
     echo "DISCOVERING JOBS..."
-    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
+    (scan_stages, git_urls) = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelSubtasks(), a groovy/JenkinsDSL thing"
 } catch (Exception e) {
@@ -295,4 +272,26 @@ try {
     echo "Failed to trigger parallel scans: " + e
     currentBuild.result = 'FAILED'
     manager.buildAborted()
+}
+
+if ( git_urls.equals("") ) {
+    echo "SKIP to register Git URLs with git reference repo : list seems empty"
+} else {
+    try {
+        // The update script by itself is quite fast, but its
+        // startup can be blocked by other copies running or
+        // NFS server unavailability. Timing out allows the
+        // rescans to still happen, and try/catch block makes it
+        // non-fatal as it is not a big issue to register later.
+        node("master-worker") { // shell part must run on a node (NOTE: and as "gitowner" if locally)
+            stage("Update Git Reference repo pointers") {
+                timeout (time: 5, unit: 'MINUTES') {
+//                    sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+                    sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+                }
+            }
+        }
+    } catch (Exception e) {
+        echo "SKIP : Failed to register Git URLs with git reference repo, can try with a later re-run: " + e
+    }
 }
