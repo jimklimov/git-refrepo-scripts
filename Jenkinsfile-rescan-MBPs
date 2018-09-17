@@ -205,22 +205,23 @@ def parallelSubtasks(String verbose, String regexSubset) {
         echo "SKIP to register Git URLs with git reference repo : list seems empty"
     } else {
         subbuilds["Update RefRepo Config"] = {
-            stage("Update Git Reference repo pointers") {
-                try {
+//            node("master-worker") { // shell part must run as "gitowner"
+                stage("Update Git Reference repo pointers") {
+                    try {
                     // The update script by itself is quite fast, but its
                     // startup can be blocked by other copies running or
                     // NFS server unavailability. Timing out allows the
                     // rescans to still happen, and try/catch block makes it
                     // non-fatal as it is not a big issue to register later.
-                    timeout (time: 5, unit: 'MINUTES') {
-                        node("master-worker") { // shell part must run as "gitowner"
-                            sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+                        timeout (time: 5, unit: 'MINUTES') {
+//                            sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+                            sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
                         }
+                    } catch (Exception e) {
+                        echo "SKIP : Failed to register Git URLs with git reference repo, can try with a later re-run: " + e
                     }
-                } catch (Exception e) {
-                    echo "SKIP : Failed to register Git URLs with git reference repo, can try with a later re-run: " + e
                 }
-            }
+//            }
         }
     }
 
