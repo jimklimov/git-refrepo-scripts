@@ -212,7 +212,8 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         stage("Update Git Reference repo pointers") {
                             timeout (time: 5, unit: 'MINUTES') {
 //                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
-                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+//                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
                             }
                         }
                     }
