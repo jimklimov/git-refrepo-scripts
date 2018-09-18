@@ -198,34 +198,7 @@ def parallelSubtasks(String verbose, String regexSubset) {
         }
     } // Populate git_urls string with unique URLs for discovered jobs (if any)
 
-    if ( git_urls.equals("") ) {
-        echo "SKIP to register Git URLs with git reference repo : list seems empty"
-    } else {
-        subbuilds["RefRepo"] = {
-            stage("RefRepoConfig") {
-                try {
-                    // The update script by itself is quite fast, but its
-                    // startup can be blocked by other copies running or
-                    // NFS server unavailability. Timing out allows the
-                    // rescans to still happen, and try/catch block makes it
-                    // non-fatal as it is not a big issue to register later.
-                    node("master-worker") { // shell part must run on a node (NOTE: and as "gitowner" if locally)
-                        stage("Update Git Reference repo pointers") {
-                            timeout (time: 5, unit: 'MINUTES') {
-//                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
-//                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    echo "SKIP : Failed to register Git URLs with git reference repo, can try with a later re-run: " + e
-                }
-            }
-        }
-    } // Add a RefRepo subbuild if got not-empty git_urls
-
-    return subbuilds
+    return [subbuilds, git_urls]
 }
 
 
@@ -275,8 +248,37 @@ pipeline {
 // marshalling exception messages in the end. Replaying
 // the same groovy script with no changes just works.
 try {
+    String git_urls = ""
     echo "DISCOVERING JOBS..."
-    scan_stages = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
+    (scan_stages, git_urls) = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
+
+    // Note: the "sh" step should not be referenced inside the @NonCPS method
+    if ( git_urls.equals("") ) {
+        echo "SKIP to register Git URLs with git reference repo : list seems empty"
+    } else {
+        scan_stages["RefRepo"] = {
+            stage("RefRepoConfig") {
+                try {
+                    // The update script by itself is quite fast, but its
+                    // startup can be blocked by other copies running or
+                    // NFS server unavailability. Timing out allows the
+                    // rescans to still happen, and try/catch block makes it
+                    // non-fatal as it is not a big issue to register later.
+                    node("master-worker") { // shell part must run on a node (NOTE: and as "gitowner" if locally)
+                        stage("Update Git Reference repo pointers") {
+                            timeout (time: 5, unit: 'MINUTES') {
+//                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
+//                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    echo "SKIP : Failed to register Git URLs with git reference repo, can try with a later re-run: " + e
+                }
+            }
+        }
+    } // Add a RefRepo subbuild if got not-empty git_urls
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelSubtasks(), a groovy/JenkinsDSL thing"
 } catch (Exception e) {
