@@ -264,7 +264,7 @@ try {
                     // NFS server unavailability. Timing out allows the
                     // rescans to still happen, and try/catch block makes it
                     // non-fatal as it is not a big issue to register later.
-                    node("master-worker") { // shell part must run on a node (NOTE: and as "gitowner" if locally)
+                    node { // shell part must run on a node (NOTE: and on "master-worker" as "gitowner" if locally)
                         stage("Update Git Reference repo pointers") {
                             timeout (time: 5, unit: 'MINUTES') {
 //                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
