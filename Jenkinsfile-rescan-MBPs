@@ -81,7 +81,8 @@ def parallelSubtasks(String verbose, String regexSubset) {
                         echo "No supported SCM source variable found: " + eSCMsrc;
 // TODO: Support legacy jobs, they should have SCM's too (the CI repo at least):
 // 'SCMless-freestyle' : No supported SCM source variable found: groovy.lang.MissingPropertyException: No such property: SCMSources for class: hudson.model.FreeStyleProject
-// 'SCMless-MultiJob-toplevel' : No supported SCM source variable found: groovy.lang.MissingPropertyException: No such property: SCMSources for class: com.tikal.jenkins.plugins.multijob.MultiJobProject                    }
+// 'SCMless-MultiJob-toplevel' : No supported SCM source variable found: groovy.lang.MissingPropertyException: No such property: SCMSources for class: com.tikal.jenkins.plugins.multijob.MultiJobProject
+                    }
                 }
             } // See if we have any scmsrc's
 
