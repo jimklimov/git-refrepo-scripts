@@ -218,7 +218,8 @@ pipeline {
     triggers {
         cron('H/30 * * * *')
     }
-    agent {label "master||master-real||master-worker"}
+//    agent {label "master||master-real||master-worker"}
+    agent {label "master-worker"}
     parameters {
         booleanParam (
             defaultValue: false,
