@@ -204,7 +204,11 @@ def parallelSubtasks(String verbose, String regexSubset) {
         if ( url.contains("://") ) {
             if (verbose.equals("true"))
                 echo "GIT-URL: MBP Job(s) '${jobnames}' have Git URL '" + url + "'";
-            git_urls += url + " ";
+            if ( url.contains("gitlab.modernrepos.com") || url.contains("bb.modernrepos.com") ) {
+                echo "SKIP-URL: Skipping obsoleted-server Git URL '" + url + "'";
+            } else {
+                git_urls += url + " ";
+            }
         } else {
             echo "SKIP-URL: MBP Job(s) '${jobnames}' have invalid URL: '" + url + "'";
         }
