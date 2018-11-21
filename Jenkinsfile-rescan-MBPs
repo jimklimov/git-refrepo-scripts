@@ -65,7 +65,18 @@ def parallelSubtasks(String verbose, String regexSubset) {
 
         // Determine Git URL for any build job, not only MBPs
         def gotUrl = false
+        def skipJob = false
         try {
+            if (j.disabled) {
+                echo "SKIP-URL: job '${j.fullName}' is disabled, ignoring the URLs it refers to"
+                skipJob = true
+            }
+        } catch (Exception eDisabled) {
+            echo "WARNING: failed to query whether the job '${j.fullName}' is disabled, so considering its Git URLs just in case: " + eDisabled
+        }
+
+        if (!skipJob) {
+          try {
             if (verbose.equals("true")) {
                 echo "Analyzing Git URL for job '${j.fullName}' ..."
             }
@@ -139,9 +150,10 @@ def parallelSubtasks(String verbose, String regexSubset) {
                 candidateurls["${url}"] += "${j.fullName} ";
             } // Find candidateurl's in discovered scmsrc's
 
-        } catch (Exception e1) {
+          } catch (Exception e1) {
             echo "SKIP-URL: Failed to research SCM URL for '${j.fullName}' : " + e1
-        }
+          } // try to investigate job attributes
+        } // if !skipJob
 
         if (!gotUrl) {
             try {
