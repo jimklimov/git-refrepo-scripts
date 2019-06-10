@@ -26,7 +26,7 @@ import jenkins.branch.*
 def scan_stages = [:]
 
 @NonCPS
-def parallelSubtasks(String verbose, String regexSubset) {
+def parallelSubtasks(String verbose, String regexSubset, String regexExclude) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
     String git_urls = ""
@@ -59,6 +59,13 @@ def parallelSubtasks(String verbose, String regexSubset) {
         } else {
             if ( ! ( j.fullName =~ regexSubset ) ) {
                 echo "SKIP-REINDEX+URL: Ignoring MBP JOB whose name '${j.fullName}' did not match specified regex of interesting jobs to rescan '${regexSubset}'"
+                return;
+            }
+        }
+
+        if ( ! regexExclude.equals("") ) {
+            if ( j.fullName =~ regexExclude ) {
+                echo "SKIP-REINDEX+URL: Ignoring MBP JOB whose name '${j.fullName}' matched specified regex of jobs to exclude from rescan '${regexExclude}'"
                 return;
             }
         }
@@ -246,6 +253,10 @@ pipeline {
             defaultValue: '',
             description: 'Groovy regex for constraining a list of rescans to schedule (if not empty, then only matching MBP job names are scanned)',
             name: 'JOBLIST_SUBSET')
+        string (
+            defaultValue: '.*/(PP|CB)/.*',
+            description: 'Groovy regex for constraining a list of rescans to schedule (if not empty, then matching MBP job names are excluded)\nDefault: PP and CB projects whom we help build but do not provide a cache for',
+            name: 'JOBLIST_EXCLUDE')
     }
     stages {
         stage('Single-exec milestone') {
@@ -267,7 +278,7 @@ pipeline {
 try {
     String git_urls = ""
     echo "DISCOVERING JOBS..."
-    (scan_stages, git_urls) = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}" )
+    (scan_stages, git_urls) = parallelSubtasks( "${params.JOBLIST_VERBOSE}", "${params.JOBLIST_SUBSET}", "${params.JOBLIST_EXCLUDE}" )
 
     // Note: the "sh" step should not be referenced inside the @NonCPS method
     if ( git_urls.equals("") ) {
