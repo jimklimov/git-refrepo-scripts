@@ -243,7 +243,7 @@ pipeline {
     }
 //    agent {label "master||master-real||master-worker"}
 //    agent {label "master-worker"}
-    agent {label "testrunner-infra"}
+    agent {label "master-infra"}
     parameters {
         booleanParam (
             defaultValue: false,
