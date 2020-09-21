@@ -298,7 +298,9 @@ try {
                             timeout (time: 5, unit: 'MINUTES', activity: true) {
 //                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
 //                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+//                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
+                                // Only download contents for NEW seen SCM URLs and inspect for submodules (also acts as "add" to make sure listed base URLs are registered):
+                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false ./register-git-cache.sh add-recursive ${git_urls} ' """
                             }
                         }
                     }
