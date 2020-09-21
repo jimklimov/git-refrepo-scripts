@@ -295,7 +295,7 @@ try {
                     // non-fatal as it is not a big issue to register later.
                     node { // shell part must run on a node (NOTE: and on "master-worker" as "gitowner" if locally)
                         stage("Update Git Reference repo pointers") {
-                            timeout (time: 5, unit: 'MINUTES') {
+                            timeout (time: 5, unit: 'MINUTES', activity: true) {
 //                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
 //                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
                                 sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
