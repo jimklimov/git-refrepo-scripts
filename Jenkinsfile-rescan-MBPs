@@ -255,7 +255,7 @@ pipeline {
             description: 'Groovy regex for constraining a list of rescans to schedule (if not empty, then only matching MBP job names are scanned)',
             name: 'JOBLIST_SUBSET')
         string (
-            defaultValue: '.*(/PP/|/CB/|git\.modernrepos\.com|cvs\.legacyrepos).*',
+            defaultValue: '.*(/PP/|/CB/|git\\.modernrepos\\.com|cvs\\.legacyrepos).*',
             description: 'Groovy regex for constraining a list of rescans to schedule (if not empty, then matching MBP job names are excluded)\nDefault: PP and CB projects whom we help build but do not provide a cache for',
             name: 'JOBLIST_EXCLUDE')
     }
