@@ -250,6 +250,11 @@ pipeline {
             description: 'Print found and skipped items?',
             name: 'JOBLIST_VERBOSE'
         )
+        booleanParam (
+            defaultValue: true,
+            description: 'Update git reference repo?',
+            name: 'UPDATE_REFREPO'
+        )
         string (
             defaultValue: '',
             description: 'Groovy regex for constraining a list of rescans to schedule (if not empty, then only matching MBP job names are scanned)',
@@ -285,6 +290,9 @@ try {
     if ( git_urls.equals("") ) {
         echo "SKIP to register Git URLs with git reference repo : list seems empty"
     } else {
+      if ( params.UPDATE_REFREPO.equals("false") ) {
+        echo "SKIP to register Git URLs with git reference repo : requested so. List is: " + git_urls
+      } else {
         scan_stages["RefRepo"] = {
             stage("RefRepoConfig") {
                 try {
@@ -309,6 +317,7 @@ try {
                 }
             }
         }
+      } // Add a RefRepo subbuild if not skipped by build arg
     } // Add a RefRepo subbuild if got not-empty git_urls
 } catch (java.io.NotSerializableException e) {
     echo "Ignoring NotSerializableException during parallelSubtasks(), a groovy/JenkinsDSL thing"
