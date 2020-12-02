@@ -25,7 +25,10 @@ import jenkins.branch.*
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
 
-@NonCPS
+// Jenkins script security since late 2020 does not like generated code
+// clauses made by a routine with such decoration. "Passive" returned
+// values like git_urls list here are okay, but stages are "unsandboxed".
+// @NonCPS
 def parallelSubtasks(String verbose, String regexSubset, String regexExclude) {
     def subbuilds = [:]
     def jobs = Jenkins.instance.getAllItems()
