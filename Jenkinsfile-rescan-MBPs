@@ -311,7 +311,8 @@ try {
 //                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
 //                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
                                 // Only download contents for NEW seen SCM URLs and inspect for submodules (also acts as "add" to make sure all listed base URLs are registered):
-                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true ./register-git-cache.sh add-recursive new ${git_urls} ' """
+//                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true ./register-git-cache.sh add-recursive new ${git_urls} ' """
+                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive new ${git_urls} ' """
                             }
                         }
                     }
