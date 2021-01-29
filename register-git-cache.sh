@@ -763,6 +763,8 @@ EOF
                         ( [ -z "$D" ] || { cd "$D" || exit; }
                           git remote remove "$R"
                         )
+                    else
+                        echo "retain '$R' => '$U' in '$D'" >&2
                     fi
                     UP="$U"
                 done
