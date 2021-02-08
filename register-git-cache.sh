@@ -141,6 +141,7 @@ fi
 # This file can list line by line shell-glob (case) patterns to avoid addition
 # of certain URLs (e.g. by automated jobs parsing a history of build setups,
 # including references to SCM server instances that no longer exist).
+[ -n "$EXCEPT_PATTERNS_FILE" ] || \
 EXCEPT_PATTERNS_FILE="${REFREPODIR_BASE}/.gitcache.except"
 case "${QUIET_SKIP-}" in
     [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) QUIET_SKIP=true ;;
