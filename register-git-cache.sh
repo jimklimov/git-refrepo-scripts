@@ -132,6 +132,12 @@ else
     export REFREPODIR_BASE
 fi
 
+if [ -s "$REFREPODIR_BASE/.gitcache.conf" ]; then
+    # Override settings that can be passed as envvars, e.g. REFREPODIR_MODE
+    source "$REFREPODIR_BASE/.gitcache.conf" \
+    || { echo "FAILED to source '$REFREPODIR_BASE/.gitcache.conf'" >&2; exit 1; }
+fi
+
 # This file can list line by line shell-glob (case) patterns to avoid addition
 # of certain URLs (e.g. by automated jobs parsing a history of build setups,
 # including references to SCM server instances that no longer exist).
