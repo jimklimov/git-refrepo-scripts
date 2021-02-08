@@ -979,6 +979,7 @@ fi
 # it from same commit hashes again and again
 # TODO: Garbage-collection in TEMPDIR_BASE as we would change HEADs,
 # delete repos, known old pulls, tags and/or branches etc. over time?
+[ -n "$TEMPDIR_BASE" ] || \
 TEMPDIR_BASE="${REFREPODIR_BASE}/.gitcache.tempdir"
 # Absolutize to be sure
 mkdir -p "$TEMPDIR_BASE"
