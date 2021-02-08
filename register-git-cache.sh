@@ -135,7 +135,7 @@ fi
 # This file can list line by line shell-glob (case) patterns to avoid addition
 # of certain URLs (e.g. by automated jobs parsing a history of build setups,
 # including references to SCM server instances that no longer exist).
-EXCEPT_PATTERNS_FILE="${REFREPODIR_BASE}/.except"
+EXCEPT_PATTERNS_FILE="${REFREPODIR_BASE}/.gitcache.except"
 case "${QUIET_SKIP-}" in
     [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) QUIET_SKIP=true ;;
     *) QUIET_SKIP=false ;;
@@ -972,7 +972,7 @@ fi
 # it from same commit hashes again and again
 # TODO: Garbage-collection in TEMPDIR_BASE as we would change HEADs,
 # delete repos, known old pulls, tags and/or branches etc. over time?
-TEMPDIR_BASE="${REFREPODIR_BASE}/.git.cache.rgc"
+TEMPDIR_BASE="${REFREPODIR_BASE}/.gitcache.tempdir"
 # Absolutize to be sure
 mkdir -p "$TEMPDIR_BASE"
 TEMPDIR_BASE="$(cd "$TEMPDIR_BASE" && pwd)"
