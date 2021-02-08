@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 // Jenkinsfile-rescan-MBPs
-// (C) 2018 by Jim Klimov
+// (C) 2018 - 2021 by Jim Klimov <jimklimov@gmail.com>
 // This Jenkinsfile makes-believe it is a Declarative pipeline for
 // the sake of commonality of our pipeline scripts (build args,
 // various options and stuff), but in fact this is a scripted
@@ -244,8 +244,7 @@ pipeline {
     triggers {
         cron('H/30 * * * *')
     }
-//    agent {label "master||master-real||master-worker"}
-//    agent {label "master-worker"}
+//    agent {label "master"}
     agent {label "master-infra"}
     parameters {
         booleanParam (
@@ -307,11 +306,17 @@ try {
                     node { // shell part must run on a node (NOTE: and on "master-worker" as "gitowner" if locally)
                         stage("Update Git Reference repo pointers") {
                             timeout (time: 5, unit: 'MINUTES', activity: true) {
+/*
+                                // Various obsoleted options for adding newly seem Git URLs, for syntax examples:
 //                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
 //                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
 //                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-                                // Only download contents for NEW seen SCM URLs and inspect for submodules (also acts as "add" to make sure all listed base URLs are registered):
 //                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true ./register-git-cache.sh add-recursive new ${git_urls} ' """
+*/
+                                // Only download contents for NEW seen SCM URLs and inspect for submodules
+                                // (also acts as "add" to make sure all listed base URLs are registered);
+                                // there is a separate job to regularly (and maybe lengthily) update any
+                                // already existing repos:
                                 sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive new ${git_urls} ' """
                             }
                         }
