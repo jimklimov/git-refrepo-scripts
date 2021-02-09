@@ -31,10 +31,14 @@ a monolithic or nested reference repository directory tree maintained by
 `register-git-cache.sh` using the same string for `<dir>` configuration.
 This helps in mass-cloning operations in shell scripts.
 
-* The Jenkinsfile-rescan-MBPs provides a sample pipeline job that can
-discover previously not tracked SCM URLs in recent builds on Jenkins,
+* The Jenkinsfile-rescan-MBPs provides a sample pipeline script job that
+can discover previously not tracked SCM URLs in recent builds on Jenkins,
 and call the script above deployed on a shared NAS to provide the Git
-reference repo to the whole CI farm.
+reference repo to the whole CI farm. As another goal, this job allows
+to regularly poll organizations on SCM platforms to discover new repos,
+and new branches in the generated MBP (Multi-Branch-Pipeline) jobs -
+something that Jenkins did very rarely (once a day) relying on webhooks.
+Alas, those don't exist for tightly firewalled CI farms.
 
 Hope this helps,
 Jim Klimov
