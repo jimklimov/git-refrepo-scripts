@@ -1,0 +1,196 @@
+#!/bin/sh
+
+# Copyright (C) 2020 - 2021 by Jim Klimov <jimklimov@gmail.com>
+#
+# Perform `git clone` (TODO: +submodule?) operations from arbitrary shell
+# scripts or command-line, optionally employing the monolithic or
+# nested reference repository directory conveyed by the string value
+# of GIT_REFERENCE_REPO_DIR environment variable with support for
+# parameterized suffix, similar to those supported by the Jenkins
+# git-client plugin with the following enhancements:
+#   https://issues.jenkins.io/browse/JENKINS-64383
+#   https://github.com/jenkinsci/git-client-plugin/pull/644
+# The variable may be empty (meaning to not use the arguments for
+# reference repositories), an existing directory, or an existing base
+# directory suffixed with a verbatim '/${GIT_...}' substring (with
+# dollar and braces included) that can have a few specific values:
+#   GIT_URL_BASENAME = subdir named by "basename" of normalized repo URL
+#   GIT_URL_SHA256 = subdir named by hash of normalized repo URL
+#   GIT_SUBMODULES = sha256 if present, or basename otherwise
+#       Note that here we currently use directories maintained by
+#       register-git-cache.sh - so with a bare repo on top, thus
+#       "real" Git submodules as an indication of a tracked URL are
+#       not handled natively there, nor in this script yet; if some
+#       different nested repository is used, submodules are just
+#       another subdirectory detected to have a git repo of its own.
+#   GIT_*_FALLBACK = if dir named above is not present, use base dir
+
+get_refrepo_path() {
+    # Based on URL param and GIT_REFERENCE_REPO_DIR envvar as detailed
+    # above, this returns either an empty string (=> no --reference arg
+    # to use) or an existing locally-resolved directory name where a
+    # git repository was found; there are no guarantees that this dir
+    # chosen by its name actually tracks the remote URL and contains
+    # the expected git reference data for the current operation.
+
+    # TODO: Normalization same as in register-git-cache.sh
+    REPOURL="$1"
+
+    if [ -z "${GIT_REFERENCE_REPO_DIR-}" ] ; then
+        echo "Will not try to use a reference git repo: GIT_REFERENCE_REPO_DIR does not point to anything" >&2
+        return 0
+    fi
+
+    if [ -d "${GIT_REFERENCE_REPO_DIR-}" ] ; then
+        # Literal value from the envvar points to a directory, use it
+        if [ -e "${GIT_REFERENCE_REPO_DIR}/.git" -o -d "${GIT_REFERENCE_REPO_DIR}/objects" ]; then
+            echo "Will try to use monolithic reference git repo from $GIT_REFERENCE_REPO_DIR ..." >&2
+        else
+            # Cater for future git abilities?
+            echo "WARNING: GIT_REFERENCE_REPO_DIR pointed to '$GIT_REFERENCE_REPO_DIR' which is a directory, but did not seem to host a git repository. Using it as a refrepo may fail..." >&2
+        fi
+        echo "$GIT_REFERENCE_REPO_DIR"
+        return 0
+    fi
+
+    # Simple cases aside, see if the parameterized value points anywhere
+    GIT_REFERENCE_REPO_BASEDIR="`dirname "${GIT_REFERENCE_REPO_DIR-}"`"
+    if [ -z "$GIT_REFERENCE_REPO_BASEDIR" ] || [ ! -d "$GIT_REFERENCE_REPO_BASEDIR/" ] ; then
+        echo "Will not try to use a reference git repo: GIT_REFERENCE_REPO_BASEDIR='$GIT_REFERENCE_REPO_BASEDIR' does not point to an existing directory" >&2
+        return 1
+    fi
+
+    # At least GIT_REFERENCE_REPO_BASEDIR exists at this point...
+    GIT_REFERENCE_REPO_DIR_MODE="`basename "${GIT_REFERENCE_REPO_DIR-}"`"
+    REPOURL_BASENAME="`basename "$REPOURL" .git`"
+    REFREPO=""
+
+    # TODO: This currently cheats to short-circuit GIT_SUBMODULES as
+    # GIT_URL_BASENAME and does not pick through GIT_URL_SHA256 variant
+    # (maybe with .git extension)
+    case "${GIT_REFERENCE_REPO_DIR_MODE}" in
+        '${GIT_URL_BASENAME}'|'${GIT_SUBMODULES}'|'${GIT_URL_BASENAME_FALLBACK}'|'${GIT_SUBMODULES_FALLBACK}')
+            REFREPO="${GIT_REFERENCE_REPO_BASEDIR}/${REPOURL_BASENAME}"
+            ;;
+        '${GIT_URL_SHA256}'|'${GIT_URL_SHA256_FALLBACK}')
+            REFREPO="${GIT_REFERENCE_REPO_BASEDIR}/`echo "${REPOURL}" | tr '[A-Z]' '[a-z]' | sha256sum | cut -d' ' -f 1`"
+            ;;
+        *)  echo "WARNING: Unsupported parameterized suffix ('${GIT_REFERENCE_REPO_DIR_MODE}') in GIT_REFERENCE_REPO_DIR='$GIT_REFERENCE_REPO_DIR'" >&2
+            REFREPO="" ### Keep this blank to report monorepo below if arg is GIT_...._FALLBACK at least
+            ;;
+    esac
+
+    if [ -n "${REFREPO}" ] && [ ! -d "${REFREPO}" ] ; then
+        REFREPO="${REFREPO}.git"
+    fi
+
+    if [ -n "${REFREPO}" ] && [ -e "${REFREPO}/.git" -o -d "${REFREPO}/objects" ] ; then
+        echo "Will try to use parameterized reference git repo from $REFREPO to check out $REPOURL ..." >&2
+        echo "$REFREPO"
+        return 0
+    else
+        case "${GIT_REFERENCE_REPO_DIR_MODE}" in
+            '${GIT_'*'_FALLBACK}')
+                REFREPO="${GIT_REFERENCE_REPO_BASEDIR}"
+                if [ -n "${REFREPO}" ] && [ -e "${REFREPO}/.git" -o -d "${REFREPO}/objects" ] ; then
+                    echo "Will try to use monolithic reference git repo from $REFREPO to check out $REPOURL ..." >&2
+                    echo "$REFREPO"
+                    return 0
+                fi
+                echo "WARNING: parameterized GIT_REFERENCE_REPO_DIR fallback pointed to '$GIT_REFERENCE_REPO_BASEDIR' which is a directory, but did not seem to host a git repository." >&2
+                # Do not suggest a usable directory here
+                return 0
+                ;;
+            *) # No REFREPO or it is not a git workspace, and no fallback
+                echo "Will not try to use a reference git repo: parameterized GIT_REFERENCE_REPO_DIR does not point to anything useful to check out $REPOURL, and no GIT_..._FALLBACK mode was requested" >&2
+                # Do not suggest a usable directory here
+                return 0
+                ;;
+        esac
+    fi
+
+    # Should not get here, except for some unhandled situation?
+    return 2
+}
+
+ARGV_LAST_1=""
+ARGV_LAST_2=""
+ARGV_REFERENCE=""
+parse_interesting_args() {
+    while [ $# -gt 2 ]; do
+        case "$1" in
+            --reference|--reference-if-able)
+                [ -n "$GIT_REFERENCE_REPO_DIR" ] && echo "WARNING: Overriding a GIT_REFERENCE_REPO_DIR value from '$GIT_REFERENCE_REPO_DIR' to '$2'" >&2
+                ARGV_REFERENCE="$1"
+                GIT_REFERENCE_REPO_DIR="$2"
+                shift
+                ;;
+        esac
+        shift
+    done
+
+    # Now we have 0, 1 or 2 args in "$@" of the function
+    # with 0 or 1 being that few args in the original call
+    ARGV_LAST_1=""
+    ARGV_LAST_2=""
+    case "$#" in
+        0) return ;;
+        1) ARGV_LAST_1="$1"; return ;;
+        2) ARGV_LAST_1="$2"; ARGV_LAST_2="$1"; return ;;
+    esac
+}
+
+do_git_clone() {
+    # Perform a `git clone "$@"` with added --reference `get_refrepo_path`
+    # if that is not empty for an URL in the args (last or one-before-last)
+    # Per man page: git clone [optional args] <repository> [optional directory]
+
+    if [ $# = 0 ] ; then
+        echo "ERROR: git clone needs at least a 'repository' argument" >&2
+        return 1
+    fi
+
+    REFREPODIR=""
+    if [ -n "$GIT_REFERENCE_REPO_DIR" ]; then
+        parse_interesting_args "$@"
+
+        # Note: at this point we do not really know if the last arg is the
+        # repo URL or an optional directory to clone into. The directory's
+        # desired basename may point us to a suitable refrepo just as well.
+        REFREPODIR="`get_refrepo_path "$ARGV_LAST_1"`" \
+        && [ -n "$REFREPODIR" ] \
+        || { if [ -n "$ARGV_LAST_2" ]; then
+                echo "INFO: Retrying for the one-before-last arg" >&2
+                REFREPODIR="`get_refrepo_path "$ARGV_LAST_2"`"
+             fi
+           }
+    else
+        echo "Will not try to use a reference git repo: GIT_REFERENCE_REPO_DIR does not point to anything" >&2
+    fi
+
+    if [ -n "$REFREPODIR" ]; then
+        if [ -n "$ARGV_REFERENCE" ]; then
+            echo "TODO: We need to support removing original '$ARGV_REFERENCE <dir>' arg(s) from original command line" >&2
+            # This is not a fatal setup per se, just that git would add several
+            # lines into the new repository's .git/objects/info/alternates file.
+            # More specifically, a --reference-if-able '/some/path/${GIT_...}'
+            # would report that the specified location was not found and ignored
+            # but the original --reference aborts with args that are not git dirs
+        else
+            ARGV_REFERENCE="--reference"
+        fi
+        git clone "$ARGV_REFERENCE" "$REFREPODIR" "$@"
+    else
+        git clone "$@"
+    fi
+}
+
+# Symlink-based variations, to extend for other modes (submodule ops?) later
+case "$0" in
+    */git-clone-rr|git-clone-rr)
+        do_git_clone "$@"
+        ;;
+    *) echo "ERROR: Unsupported basename for git-clone-rr script" >&2
+        exit 1
+        ;;
+esac
