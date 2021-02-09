@@ -303,11 +303,15 @@ try {
                     // NFS server unavailability. Timing out allows the
                     // rescans to still happen, and try/catch block makes it
                     // non-fatal as it is not a big issue to register later.
-                    node { // shell part must run on a node (NOTE: and on "master-worker" as "gitowner" if locally)
+                    node {
+                        // The shell part must run on a node (NOTE: and also as
+                        // "gitowner" with write-access to the jenkins-gitcache
+                        // directory if locally or over NFS)
                         stage("Update Git Reference repo pointers") {
                             timeout (time: 5, unit: 'MINUTES', activity: true) {
 /*
-                                // Various obsoleted options for adding newly seem Git URLs, for syntax examples:
+                                // Various (obsoleted) options for adding
+                                // newly seen Git URLs, as syntax examples:
 //                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
 //                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
 //                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
