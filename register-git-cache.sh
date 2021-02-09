@@ -280,7 +280,7 @@ do_register_repo() {
 
     local REFREPODIR_REPO
     [ -n "${REFREPODIR_MODE-}" ] && REFREPODIR_REPO="`get_subrepo_dir "$REPO"`" \
-        && { mkdir -p "${REFREPODIR_REPO}" && pushd "${REFREPODIR_BASE}/${REFREPODIR_REPO}" >/dev/null && trap 'popd >/dev/null ; trap - RETURN' RETURN || exit $? ; }
+        && { mkdir -p "${REFREPODIR_BASE}/${REFREPODIR_REPO}" && pushd "${REFREPODIR_BASE}/${REFREPODIR_REPO}" >/dev/null && trap 'popd >/dev/null ; trap - RETURN' RETURN || exit $? ; }
 
     [ -e .git ] || [ -s HEAD ] || \
         ( echo "[I] `date`: === Initializing bare repository for git references at `pwd` ..." ; \
