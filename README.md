@@ -23,6 +23,14 @@ Host github.com
     IdentityFile   ~/.ssh/id_rsa_jenkins
 ````
 
+* The `git-clone-rr` is a git method (can be used as `git clone-rr` if
+placed into `PATH`) that can use a `GIT_REFERENCE_REPO_DIR` envvar or
+intercepts the `--reference(-if-able) <dir>` argument with parameterized
+format as supported by Jenkins git-client-plugin (after PR #664) to use
+a monolithic or nested reference repository directory tree maintained by
+`register-git-cache.sh` using the same string for `<dir>` configuration.
+This helps in mass-cloning operations in shell scripts.
+
 * The Jenkinsfile-rescan-MBPs provides a sample pipeline job that can
 discover previously not tracked SCM URLs in recent builds on Jenkins,
 and call the script above deployed on a shared NAS to provide the Git
