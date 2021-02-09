@@ -263,6 +263,11 @@ do_register_repo() {
     local REPO
     REPO="$1"
 
+    # This is in REFREPODIR_BASE
+    [ -e .git ] || [ -s HEAD ] || \
+        ( echo "[I] `date`: === Initializing bare repository for git references at `pwd` ..." ; \
+          $CI_TIME git init --bare && $CI_TIME git config gc.auto 0 ) || exit $? # fatal error
+
     [ "${REGISTERED_NOW["$REPO"]}" = 1 ] \
         && { $QUIET_SKIP || echo "SKIP: Repo '$REPO' already registered during this run" ; } \
         && return 42
