@@ -1,7 +1,7 @@
 # git-refrepo-scripts
 Scripts to manage a monolithic or nested-fanout reference repository to speed up Git clones and fetches
 
-* The `register-git-cache.sh` script also is not (yet?) a git method.
+* The `register-git-cache.sh` script is not (yet?) a git method.
 This script is here to allow managing a git repository in the directory it
 resides in as a sort of cache, usable as a reference git repo for faster
 clones e.g. in a CI environment.
