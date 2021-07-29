@@ -152,6 +152,22 @@ case "${QUIET_SKIP-}" in
     *) QUIET_SKIP=false ;;
 esac
 
+getHash_sha256() {
+    # Filters stdin, returns one hash token
+    if command -v sha256sum >/dev/null 2>&1; then
+         sha256sum | cut -d' ' -f1
+         return
+    fi
+
+    if command -v openssl >/dev/null 2>&1; then
+         openssl dgst -sha256 | awk '{print $NF}'
+         return
+    fi
+
+    echo "ERROR: No sha256 hashing implementation found when needed" >&2
+    exit 1
+}
+
 # Throttling inspired by https://stackoverflow.com/a/8735146/4715872
 # TODO? Detect from CPU count
 [ -n "$MAXJOBS" ] && [ "$MAXJOBS" -gt 0 ] \
@@ -925,11 +941,11 @@ get_subrepo_dir() {
             SUBREPO_DIR="`basename "$REPONORM"`"
             ;;
         GIT_URL_SHA256|'${GIT_URL_SHA256}'|GIT_URL_SHA256_FALLBACK|'${GIT_URL_SHA256_FALLBACK}')
-            SUBREPO_DIR="`echo "$REPONORM" | sha256sum | cut -d' ' -f1`"
+            SUBREPO_DIR="`echo "$REPONORM" | getHash_sha256`"
             ;;
         GIT_SUBMODULES|'${GIT_SUBMODULES}'|GIT_SUBMODULES_FALLBACK|'${GIT_SUBMODULES_FALLBACK}')
             # Simplified matcher logic for best expectations from JENKINS-64383
-            SUBREPO_DIR="`echo "$REPONORM" | sha256sum | cut -d' ' -f1`"
+            SUBREPO_DIR="`echo "$REPONORM" | getHash_sha256`"
             [ -d "$SUBREPO_DIR" ] || [ -d "$SUBREPO_DIR.git" ] \
             || SUBREPO_DIR="`basename "$REPONORM"`"
             ;;
