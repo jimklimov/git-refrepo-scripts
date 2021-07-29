@@ -12,6 +12,11 @@
 # register the repositories you want to track, you can call
 # this script from a crontab to occasionally update the cache.
 #
+# If you host this on a ZFS-capable system (even if remotely
+# accessed like over NFS), a dedicated dataset for the cache
+# is recommended - this script will then snapshot it after
+# updates to save a consistent state every time.
+#
 # For background, see e.g.
 #   https://support.cloudbees.com/hc/en-us/articles/115001728812-Using-a-Git-reference-repository
 #   https://randyfay.com/content/reference-cache-repositories-speed-clones-git-clone-reference
