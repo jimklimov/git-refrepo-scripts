@@ -268,10 +268,10 @@ cache_list_repoids() {
         KNOWN_REPOIDS=( $(IFS="$IFSOLD"; ($CI_TIME git remote -v || echo "FAILED to 'git remote -v' in '`pwd`'">&2 ; \
           if [ -n "${REFREPODIR_MODE-}" ] ; then \
             for DG in `ls -1d "${REFREPODIR_BASE-}"/*/.git "${REFREPODIR_BASE-}"/*/objects 2>/dev/null` ; do \
-                ( D="`dirname "$DG"`" && cd "$D" && { $CI_TIME git remote -v || echo "FAILED to 'git remote -v' in '`pwd`'">&2 ; } | sed 's,$,\t'"`basename "$D"`," ) ; \
+                ( D="`dirname "$DG"`" && cd "$D" && { $CI_TIME git remote -v || echo "FAILED to 'git remote -v' in '`pwd`'">&2 ; } | sed 's,$,'"${TABCHAR}`basename "$D"`," ) ; \
             done; \
           fi; \
-        ) | sed -e '/(fetch)/!d' -e 's,^\([^ '"${TABCHAR}"']*\)[ '"${TABCHAR}"']*\([^ ]*\)[ '"${TABCHAR}"']*(fetch),\1\t\2\t\L\2,' ) )
+        ) | sed -e '/(fetch)/!d' -e 's,^\([^ '"${TABCHAR}"']*\)[ '"${TABCHAR}"']*\([^ ]*\)[ '"${TABCHAR}"']*(fetch),'"\1${TABCHAR}\2${TABCHAR}\L\2," ) )
         # TODO: Make an efficient fix for non-GNU sed (\L\2 for lowercasing \2 is an extension)
         IFS="$IFSOLD"
         if [ -n "$CI_TIME" ]; then
@@ -383,7 +383,7 @@ do_list_remotes() {
             [ -n "${REFREPODIR_MODE-}" ] && REFREPODIR_REPO="`get_subrepo_dir "$REPO"`" \
                 && { pushd "${REFREPODIR_BASE}/${REFREPODIR_REPO}" >/dev/null || exit $? ; }
             { $CI_TIME git ls-remote "$REPO" || echo "[I] `date`: FAILED to 'git ls-remote $REPO' in '`pwd`'">&2 ; } \
-                | awk -v REPODIR="${REFREPODIR_REPO}" -v REPOURL="${REPO}" '{print $1"\t"$2"\t"REPOURL"\t"REPODIR}' \
+                | awk -v REPODIR="${REFREPODIR_REPO}" -v REPOURL="${REPO}" '{print $1"'"${TABCHAR}"'"$2"'"${TABCHAR}"'"REPOURL"'"${TABCHAR}"'"REPODIR}' \
                 > "`mktemp -p "$TEMPDIR_REMOTES" remote-refs.XXXXXXXXXXXX`"
             # Note: the trailing column is empty for discoveries/runs without REFREPODIR
             # And we ignore here faults like absent remotes... or invalid Git dirs...
