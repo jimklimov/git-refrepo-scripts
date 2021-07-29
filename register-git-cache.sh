@@ -187,6 +187,8 @@ is_repo_not_excluded() {
     local REPO
     REPO="$1"
 
+    [ -n "$REPO" ] || { echo "ERROR: No REPO passed to is_repo_not_excluded()" >&2; exit 1; }
+
     if [ "${KNOWN_EXCLUDED["$REPO"]-}" = 1 ] ; then
         return 1
     fi
@@ -267,6 +269,8 @@ do_register_repo() {
     [ -e .git ] || [ -s HEAD ] || \
         ( echo "[I] `date`: === Initializing bare repository for git references at `pwd` ..." ; \
           $CI_TIME git init --bare && $CI_TIME git config gc.auto 0 ) || exit $? # fatal error
+
+    [ -n "$REPO" ] || { echo "ERROR: No REPO passed to do_register_repo()" >&2; exit 1; }
 
     [ "${REGISTERED_NOW["$REPO"]}" = 1 ] \
         && { $QUIET_SKIP || echo "SKIP: Repo '$REPO' already registered during this run" ; } \
@@ -620,6 +624,8 @@ do_unregister_repo() {
     local REPO REPO_IDS REPO_ID
     REPO="$1"
 
+    [ -n "$REPO" ] || { echo "ERROR: No REPO passed to do_unregister_repo()" >&2; exit 1; }
+
     local REFREPODIR_REPO
     [ -n "${REFREPODIR_MODE-}" ] && REFREPODIR_REPO="`get_subrepo_dir "$REPO"`" \
         && { pushd "${REFREPODIR_BASE}/${REFREPODIR_REPO}" >/dev/null && trap 'popd >/dev/null ; trap - RETURN' RETURN || return $? ; }
@@ -872,6 +878,9 @@ do_fetch_repos() {
 normalize_git_url() {
     # Perform Git URL normalization similar to that in JENKINS-64383 solution
     local REPO="$1"
+
+    [ -n "$REPO" ] || { echo "ERROR: No REPO passed to normalize_git_url()" >&2; exit 1; }
+
     local REPONORM="`echo "$REPO" | tr 'A-Z' 'a-z' | sed -e 's,\.git$,,'`"
 
     case "${REPONORM}" in
@@ -892,6 +901,7 @@ get_subrepo_dir() {
     # A currently non-existent name return in some contexts may be something
     # to `mkdir` for example.
     local REPO="$1"
+    [ -n "$REPO" ] || { echo "ERROR: No REPO passed to get_subrepo_dir()" >&2; exit 1; }
     local REPONORM="`normalize_git_url "$REPO"`"
     local SUBREPO_DIR=""
 
