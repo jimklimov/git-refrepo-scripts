@@ -61,6 +61,10 @@
 # it returns a success and not-empty string, that is the dir to (make and)
 # change into for the actual git operations for that one Git URL.
 #
+# These can be pre-set for all runs under a refrepo directory by e.g.:
+#   $ echo "REFREPODIR_MODE=GIT_SUBMODULES" > .gitcache.conf
+# Be sure to do this before first initialization (or `git init` it yourself)
+#
 # Also can be used in Windows with the Linux-like environment provided by
 # e.g. builds of Git for Windows: https://git-scm.com/download/win :
 #   C:> set REFREPODIR_MODE=GIT_SUBMODULES
@@ -267,8 +271,13 @@ do_register_repo() {
 
     # This is in REFREPODIR_BASE
     [ -e .git ] || [ -s HEAD ] || \
+        if [ -n "${REFREPODIR_MODE-}" ] ; then
+        ( echo "[I] `date`: === Initializing non-bare repository for git references with REFREPODIR_MODE='$REFREPODIR_MODE' at `pwd` ..." ; \
+          $CI_TIME git init && $CI_TIME git config gc.auto 0 ) || exit $? # fatal error
+        else
         ( echo "[I] `date`: === Initializing bare repository for git references at `pwd` ..." ; \
           $CI_TIME git init --bare && $CI_TIME git config gc.auto 0 ) || exit $? # fatal error
+        fi
 
     [ -n "$REPO" ] || { echo "ERROR: No REPO passed to do_register_repo()" >&2; exit 1; }
 
