@@ -332,7 +332,7 @@ do_list_remotes() {
         echo "[D] `date`: Discovering references from any tip commit of repo(s): $*" >&2
     fi
 
-    ( TEMPDIR_REMOTES="`mktemp -d --tmpdir rgc.XXXXXX`" && [ -n "$TEMPDIR_REMOTES" ] && [ -d "$TEMPDIR_REMOTES" ] || TEMPDIR_REMOTES=""
+    ( TEMPDIR_REMOTES="`mktemp -d .rgc.XXXXXX`" && [ -n "$TEMPDIR_REMOTES" ] && [ -d "$TEMPDIR_REMOTES" ] || TEMPDIR_REMOTES=""
       if [ -n "$TEMPDIR_REMOTES" ] ; then
         # Absolutize to be sure
         TEMPDIR_REMOTES="$(cd "$TEMPDIR_REMOTES" && pwd)"
@@ -354,7 +354,7 @@ do_list_remotes() {
                 && { pushd "${REFREPODIR_BASE}/${REFREPODIR_REPO}" >/dev/null || exit $? ; }
             { $CI_TIME git ls-remote "$REPO" || echo "[I] `date`: FAILED to 'git ls-remote $REPO' in '`pwd`'">&2 ; } \
                 | awk -v REPODIR="${REFREPODIR_REPO}" -v REPOURL="${REPO}" '{print $1"\t"$2"\t"REPOURL"\t"REPODIR}' \
-                > "`mktemp --tmpdir="$TEMPDIR_REMOTES" remote-refs.XXXXXXXXXXXX`"
+                > "`mktemp -p "$TEMPDIR_REMOTES" remote-refs.XXXXXXXXXXXX`"
             # Note: the trailing column is empty for discoveries/runs without REFREPODIR
             # And we ignore here faults like absent remotes... or invalid Git dirs...
         ) &
@@ -392,7 +392,7 @@ do_list_subrepos() {
 
     ( # List all unique branches/tags etc. known in the repo(s) from argument,
       # and from each branch, get a .gitmodules if any and URLs from it:
-        TEMPDIR_SUBURLS="`mktemp -d --tmpdir="$TEMPDIR_BASE" subrepos.$$.XXXXXXXX`" && [ -n "$TEMPDIR_SUBURLS" ] && [ -d "$TEMPDIR_SUBURLS" ] || TEMPDIR_SUBURLS=""
+        TEMPDIR_SUBURLS="`mktemp -d -p "$TEMPDIR_BASE" ".rgc.subrepos.$$.XXXXXXXX"`" && [ -n "$TEMPDIR_SUBURLS" ] && [ -d "$TEMPDIR_SUBURLS" ] || TEMPDIR_SUBURLS=""
         if [ -n "$TEMPDIR_SUBURLS" ] ; then
             # Absolutize to be sure
             TEMPDIR_SUBURLS="$(cd "$TEMPDIR_SUBURLS" && pwd)"
