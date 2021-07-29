@@ -40,5 +40,11 @@ and new branches in the generated MBP (Multi-Branch-Pipeline) jobs --
 something that Jenkins did very rarely (once a day) relying on webhooks.
 Alas, those don't exist for tightly firewalled CI farms.
 
+* It is possible to also define a simple job on your Jenkins instance,
+utilizing an agent that has write-access to the persistent git-cache
+location, to maintain this repository (trigger rescans so the cache
+stays relevant). Be sure to set `REFREPODIR_MODE` for those runs, either
+from environment or by using a `.gitcache.conf` file in the refrepo dir.
+
 Hope this helps,
 Jim Klimov
