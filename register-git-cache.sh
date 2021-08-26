@@ -1212,8 +1212,11 @@ if "$DID_UPDATE" && [ -d ./.zfs ] ; then
     SNAPNAME="rgc-auto-${SNAPDATE}_res-${BIG_RES}_actions-${ACTIONS}"
     SNAPNAME="`echo "$SNAPNAME" | tr ' ' '-'`"
     echo "[I] `date`: ZFS: Trying to snapshot `pwd` as '@${SNAPNAME}' ..." >&2
+    _U="$USER"
+    if [ -z "$_U" ]; then _U="`id -un 2>/dev/null`" || _U="`id -u 2>/dev/null`" || _U="USERNAME"; fi
     mkdir -p .zfs/snapshot/"$SNAPNAME" \
-    || echo "WARNING: Could not 'zfs snapshot'; did you 'zfs allow -ldu $USER snapshot POOL/DATASET/NAME' on the storage server?" >&2
+    || echo "WARNING: Could not 'zfs snapshot'; did you 'zfs allow -ldu ${_U} snapshot POOL/DATASET/NAME' on the storage server?" >&2
+    unset _U
 fi
 
 if [ "${#REGISTERED_NOW[@]}" -gt 0 ]; then
