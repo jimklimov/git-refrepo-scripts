@@ -648,6 +648,60 @@ do_register_repos_recursive() {
     return $RES
 }
 
+do_unregister_repos() {
+    # REPO is a substring from `git remote` listing, or a regex to match,
+    # so can be part of an ID or URL
+    # TODO: Generalize into a wrapper for arbitrary routines (ls, rm, co...)?
+    local REPO R ALL_REPO_LIST
+
+    [ -n "$1" ] || { echo "ERROR: No REPO(s) passed to do_unregister_repos()" >&2; exit 1; }
+
+    ALL_REPO_LIST="`QUIET_SKIP=true do_list_repoids | awk '{print $2}' | sort | uniq`" || ALL_REPO_LIST=""
+    [ -n "$ALL_REPO_LIST" ] || { echo "ERROR: Failed to list registered repos" >&2; exit 1; }
+
+    while [ $# -gt 0 ]; do
+        [ -n "$1" ] || continue
+        for REPO in $ALL_REPO_LIST ; do
+            if [ "$REPO" = "$1" ] || [ "$REPO.git" = "$1" ] || [ "$REPO" = "$1.git" ] ; then
+                # exact match, not a regex/glob
+                #echo "EXACT"
+                #echo \
+                do_unregister_repo "$REPO"
+                # go to next arg
+                shift
+                break 2
+            fi
+
+            case "$REPO" in
+                $1) # shell glob hit
+                    #echo "GLOB"
+                    #echo \
+                    do_unregister_repo "$REPO"
+                    # go to next arg
+                    shift
+                    break 2
+                    ;;
+            esac
+        done
+
+        R="`echo "${ALL_REPO_LIST}" | grep -E -i "$1"`" || R=""
+        if [ -n "$R" ]; then
+            # Got regex hit(s)
+            for REPO in $R ; do
+                #echo "REGEX"
+                #echo \
+                do_unregister_repo "$REPO"
+            done
+            shift
+            break
+        fi
+
+        echo "SKIP: do_unregister_repos() did not find a match for arg '$1'" >&2
+        shift
+    done
+
+}
+
 do_unregister_repo() {
     # REPO is a substring from `git remote` listing,
     # so can be part of an ID or URL
@@ -1048,7 +1102,7 @@ $0 up-all                             => fetch new commits for all registered
                                          repos (including those URLs normally
                                          skipped by .exclude patterns if any)
 $0 co REPO_URL                        => register + fetch
-$0 del REPO_GLOB                      => unregister
+$0 { del | rm } REPO_GLOB             => unregister
 $0 dedup-references [REPO_URL...]     => unregister URLs that are listed many
                                          times (e.g. when converting to fanout)
 where REPO_URL are singular original exact remote repository URLs
@@ -1109,7 +1163,7 @@ EOF
             shift
             ;;
         del|delete|remove|rm)
-            do_unregister_repo "$2" || BIG_RES=$?
+            do_unregister_repos "$2" || BIG_RES=$?
             DID_UPDATE=true
             shift
             ;;
