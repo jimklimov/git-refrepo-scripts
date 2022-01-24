@@ -66,8 +66,10 @@ The "false" mode builds the list and passes each fetch one by one, slowest but s
         // https://github.com/jimklimov/git-refrepo-scripts
         skipDefaultCheckout true
 
-        // Add timestamps to the Console Output
-        // Color ANSI Console Output: 'xterm'
+        // https://plugins.jenkins.io/timestamper
+        timestamps()
+        // https://github.com/jenkinsci/ansicolor-plugin
+        ansiColor('xterm')
     }
 
     triggers {
