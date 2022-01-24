@@ -25,11 +25,11 @@ pipeline {
         choice (
             name: 'FETCH_PARALLEL',
             choices: ['default-par', 'default-seq', 'default', 'true', 'false'],
-            description: 'Run many git processes at once - less wallclock time, potentially higher risk of failure due to resource contention, and accessing same lock files (especially for same-named tags processing in different remotes from different processes).\n
+            description: '''Run many git processes at once - less wallclock time, potentially higher risk of failure due to resource contention, and accessing same lock files (especially for same-named tags processing in different remotes from different processes).\n
 The "default-par" mode is to drill into sub-refrepos and parallelize fetches in those, while also processing such subdirectories in a parallel manner.\n
 The "default-seq" mode is to drill into sub-refrepos and parallelize fetches in those, while processing such subdirectories sequentially.\n
 The "true" parallel mode builds a list and spawns many git clients at once, and may be unsafe (to be proven).\n
-The "false" mode builds the list and passes each fetch one by one, slowest but surest.'
+The "false" mode builds the list and passes each fetch one by one, slowest but surest.'''
         )
         booleanParam (
             name: 'DEBUG',
