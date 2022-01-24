@@ -22,6 +22,14 @@ import hudson.model.*
 import hudson.util.PersistedList
 import jenkins.branch.*
 
+// See also Jenkinsfile-update-gitcache
+// By default, we tap into the Jenkins controller itself:
+def gitcache_owner = "jenkins"
+def gitcache_server = "localhost"
+def gitcache_dir = "/var/lib/jenkins/gitcache"
+def gitcache_lockname = "gitcache:jenkins-controller"
+//def gitcache_proxyfile = "/etc/proxy.default"
+
 // This shared array variable will be populated with the list of parallel stages
 def scan_stages = [:]
 
@@ -309,21 +317,23 @@ try {
                         // directory if locally or over NFS)
                         stage("Update Git Reference repo pointers") {
                             timeout (time: 5, unit: 'MINUTES', activity: true) {
+                                lock (resources: gitcache_lockname, quantity: 1) {
 /*
-                                // Various (obsoleted) options for adding
-                                // newly seen Git URLs, as syntax examples:
-//                                sh """ cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} """
-//                                sh """ ssh -t -t gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-//                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && ./register-git-cache.sh add ${git_urls} ' """
-//                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true ./register-git-cache.sh add-recursive new ${git_urls} ' """
+                                    // Various (obsoleted) options for adding
+                                    // newly seen Git URLs, as syntax examples:
+//                                    sh """ cd '${gitcache_dir}' && ./register-git-cache.sh add ${git_urls} """
+//                                    sh """ ssh -t -t '${gitcache_owner}@${gitcache_server}' ' cd '${gitcache_dir}' && ./register-git-cache.sh add ${git_urls} ' """
+//                                    sh """ ssh '${gitcache_owner}@${gitcache_server}' ' cd '${gitcache_dir}' && ./register-git-cache.sh add ${git_urls} ' """
+//                                    sh """ ssh '${gitcache_owner}@${gitcache_server}' ' cd '${gitcache_dir}' && DO_FETCH=false SKIP_LOCK=true ./register-git-cache.sh add-recursive new ${git_urls} ' """
 */
-                                // Only download contents for NEW seen SCM URLs and inspect for submodules
-                                // (also acts as "add" to make sure all listed base URLs are registered);
-                                // there is a separate job to regularly (and maybe lengthily) update any
-                                // already existing repos:
-//                                sh """ ssh gitowner@cifarmnas ' cd /home/gitowner/jenkins-gitcache && DO_FETCH=false SKIP_LOCK=true REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive new ${git_urls} ' """
-                                // Already running on "master" node as file owner:
-                                sh """ cd /var/lib/jenkins/gitcache/ && DO_FETCH=false SKIP_LOCK=true REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive new ${git_urls} """
+                                    // Only download contents for NEW seen SCM URLs and inspect for submodules
+                                    // (also acts as "add" to make sure all listed base URLs are registered);
+                                    // there is a separate job to regularly (and maybe lengthily) update any
+                                    // already existing repos:
+//                                  sh """ ssh '${gitcache_owner}@${gitcache_server}' ' cd '${gitcache_dir}' && DO_FETCH=false SKIP_LOCK=true REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive new ${git_urls} ' """
+                                    // Already running on "master" node as file owner:
+                                    sh """ cd '${gitcache_dir}' && DO_FETCH=false SKIP_LOCK=true REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive new ${git_urls} """
+                                }
                             }
                         }
                     }
