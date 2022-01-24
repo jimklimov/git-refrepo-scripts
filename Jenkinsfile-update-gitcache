@@ -1,0 +1,148 @@
+// A job for regular re-fetching of reference repository cache
+// for (shared) Git consumer usage.
+
+// The git reference repository should usefully be accessible
+// from the system that does git checkouts; in thightly-knit
+// CI farms this may be an NFS share accessible to everyone.
+// Even then, it is much more efficient to run git fetch on
+// such NFS server "locally" (well, using SSH with trusted
+// keys pre-set in jenkins user, or credentials integrated
+// below [TODO]), than over a remote filesystem.
+
+// It may help if that worker has proxy settings (for https
+// and/or ssh-over-https)
+
+// By default, we tap into the Jenkins controller itself:
+def gitcache_owner = "jenkins"
+def gitcache_server = "localhost"
+def gitcache_dir = "/var/lib/jenkins/gitcache"
+def gitcache_lockname = "gitcache:jenkins-controller"
+def gitcache_proxyfile = "/etc/proxy.default"
+
+pipeline {
+    agent { label "master-infra" }
+    parameters {
+        choice (
+            name: 'FETCH_PARALLEL',
+            choices: ['default-par', 'default-seq', 'default', 'true', 'false'],
+            description: 'Run many git processes at once - less wallclock time, potentially higher risk of failure due to resource contention, and accessing same lock files (especially for same-named tags processing in different remotes from different processes).\n
+The "default-par" mode is to drill into sub-refrepos and parallelize fetches in those, while also processing such subdirectories in a parallel manner.\n
+The "default-seq" mode is to drill into sub-refrepos and parallelize fetches in those, while processing such subdirectories sequentially.\n
+The "true" parallel mode builds a list and spawns many git clients at once, and may be unsafe (to be proven).\n
+The "false" mode builds the list and passes each fetch one by one, slowest but surest.'
+        )
+        booleanParam (
+            name: 'DEBUG',
+            defaultValue: false,
+            description: 'Enable to trace the register-git-cache.sh script run'
+        )
+        booleanParam (
+            name: 'CI_TIME',
+            defaultValue: false,
+            description: 'Report more data for time-profiling the script'
+        )
+        booleanParam (
+            name: 'QUIET_SKIP',
+            defaultValue: true,
+            description: 'Announce every skipped already-existing repo, etc.?'
+        )
+        booleanParam (
+            name: 'CI_TIME_LOOPS',
+            defaultValue: false,
+            description: 'Heavier profiling of intensive loops - more data logged, but more impact from measurement itself.'
+        )
+    }
+
+    options {
+        disableConcurrentBuilds()
+        disableResume()
+        durabilityHint('PERFORMANCE_OPTIMIZED')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+
+        // Note: we presume here that the location for refrepos
+        // is already prepared, including the base dir for the
+        // fanout of many repos, with (a symlink to) the script
+        // we use for actual work - register-git-cache.sh from
+        // https://github.com/jimklimov/git-refrepo-scripts
+        skipDefaultCheckout true
+
+        // Add timestamps to the Console Output
+        // Color ANSI Console Output: 'xterm'
+    }
+
+    triggers {
+        cron('H/30 * * * *')
+    }
+
+    stages {
+        stage("Updater") {
+            steps {
+                timeout(9600) {
+                    lock (resources: gitcache_lockname, quantity: 1) {
+                        sh """
+### Avoid erroring out
+set +e
+set -x
+
+### More generic/failoverish to do it over NFS
+cd '${gitcache_dir}' || exit \$?   ### Even in SSH below, better note that NFS resource is accessible and server deems itself running
+#git fetch --all
+#time REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh fetch -vp
+
+### Faster to do it locally on the storage host than over NFS from a worker
+### Note: shell-session logins should include the default proxy settings for HTTP(S) sources
+RES=0
+
+DO_FETCH='default'
+case "\$FETCH_PARALLEL" in
+default)
+    DO_FETCH='default'
+    ;;
+default-par)
+    DO_FETCH='-p'
+    ;;
+default-seq)
+    DO_FETCH='-s'
+    ;;
+true)
+    DO_FETCH='-vp'
+    ;;
+false)
+    DO_FETCH='-vs'
+    ;;
+esac
+
+time ssh "${gitcache_owner}@${gitcache_server}" "if [ -n '${gitcache_proxyfile}' ] && [ -s '${gitcache_proxyfile}' ]; then . '${gitcache_proxyfile}' || true ; fi; cd '${gitcache_dir}' && DEBUG='${params.DEBUG}' QUIET_SKIP='${params.QUIET_SKIP}' CI_TIME='${params.CI_TIME}' DO_FETCH='${params.DO_FETCH}' REFREPODIR_MODE='GIT_SUBMODULES' ./register-git-cache.sh add-recursive all" || RES=\$?
+exit \$RES
+
+###### LEGACY SCRIPT:
+case "\$FETCH_PARALLEL" in
+default)
+    #ssh -t -t "${gitcache_owner}@${gitcache_server}" "bash --login -c 'cd '${gitcache_dir}' && time ./register-git-cache.sh fetch'"
+    time ssh "${gitcache_owner}@${gitcache_server}" "if [ -n '${gitcache_proxyfile}' ] && [ -s '${gitcache_proxyfile}' ]; then . '${gitcache_proxyfile}' || true ; fi; cd '${gitcache_dir}' && DEBUG='${params.DEBUG}' QUIET_SKIP='${params.QUIET_SKIP}' CI_TIME='${params.CI_TIME}' REFREPODIR_MODE='GIT_SUBMODULES' ./register-git-cache.sh fetch" || RES=\$?
+    ;;
+true)
+    #ssh -t -t "${gitcache_owner}@${gitcache_server}" "bash --login -c 'cd '${gitcache_dir}' && time ./register-git-cache.sh fetch -vp'"
+    time ssh "${gitcache_owner}@${gitcache_server}" "if [ -n '${gitcache_proxyfile}' ] && [ -s '${gitcache_proxyfile}' ]; then . '${gitcache_proxyfile}' || true ; fi; cd '${gitcache_dir}' && DEBUG='${params.DEBUG}' QUIET_SKIP='${params.QUIET_SKIP}' CI_TIME='${params.CI_TIME}' REFREPODIR_MODE='GIT_SUBMODULES' ./register-git-cache.sh fetch -vp" || RES=\$?
+    ;;
+false)
+    #ssh -t -t "${gitcache_owner}@${gitcache_server}" "bash --login -c 'cd '${gitcache_dir}' && time ./register-git-cache.sh fetch -vs'"
+    time ssh "${gitcache_owner}@${gitcache_server}" "if [ -n '${gitcache_proxyfile}' ] && [ -s '${gitcache_proxyfile}' ]; then . '${gitcache_proxyfile}' || true ; fi; cd '${gitcache_dir}' && DEBUG='${params.DEBUG}' QUIET_SKIP='${params.QUIET_SKIP}' CI_TIME='${params.CI_TIME}' REFREPODIR_MODE='GIT_SUBMODULES' ./register-git-cache.sh fetch -vs" || RES=\$?
+    ;;
+esac
+
+### By default this does a fetch of all repos to see their branches up to date
+### so we pass a DO_FETCH=false to avoid re-fetching earlier known repos that
+### we have just updated above
+#time ssh "${gitcache_owner}@${gitcache_server}" "if [ -n '${gitcache_proxyfile}' ] && [ -s '${gitcache_proxyfile}' ]; then . '${gitcache_proxyfile}' || true ; fi; cd '${gitcache_dir}' && DO_FETCH=false DEBUG='${params.DEBUG}' REFREPODIR_MODE=GIT_SUBMODULES ./register-git-cache.sh add-recursive `SKIP_LOCK=true REFREPODIR_MODE='GIT_SUBMODULES' ./register-git-cache.sh ls | awk '{print \$2}' | tr '\n' ' '`" || RES=\$?
+time ssh "${gitcache_owner}@${gitcache_server}" "if [ -n '${gitcache_proxyfile}' ] && [ -s '${gitcache_proxyfile}' ]; then . '${gitcache_proxyfile}' || true ; fi; cd '${gitcache_dir}' && DO_FETCH=false DEBUG='${params.DEBUG}' QUIET_SKIP='${params.QUIET_SKIP}' CI_TIME='${params.CI_TIME}' REFREPODIR_MODE='GIT_SUBMODULES' ./register-git-cache.sh add-recursive all" || RES=\$?
+
+exit \$RES
+"""
+
+                    } // lock
+                } // timeout
+            } // steps
+        } // stage Updater
+    } // stages
+}
