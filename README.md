@@ -45,6 +45,7 @@ utilizing an agent that has write-access to the persistent git-cache
 location, to maintain this repository (trigger rescans so the cache
 stays relevant). Be sure to set `REFREPODIR_MODE` for those runs, either
 from environment or by using a `.gitcache.conf` file in the refrepo dir.
+The `Jenkinsfile-update-gitcache` offers a starting point for such job.
 
 Hope this helps,
 Jim Klimov
