@@ -252,8 +252,8 @@ pipeline {
     triggers {
         cron('H/30 * * * *')
     }
-    agent {label "master"}
-//    agent {label "master-infra"}
+//    agent {label "master"}
+    agent {label "master-infra"}
     parameters {
         booleanParam (
             defaultValue: false,
