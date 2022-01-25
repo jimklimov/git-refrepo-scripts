@@ -317,7 +317,7 @@ try {
                         // directory if locally or over NFS)
                         stage("Update Git Reference repo pointers") {
                             timeout (time: 5, unit: 'MINUTES', activity: true) {
-                                lock (resources: gitcache_lockname, quantity: 1) {
+                                lock (resource: gitcache_lockname, quantity: 1) {
 /*
                                     // Various (obsoleted) options for adding
                                     // newly seen Git URLs, as syntax examples:
