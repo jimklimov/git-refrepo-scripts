@@ -311,7 +311,7 @@ try {
                     // NFS server unavailability. Timing out allows the
                     // rescans to still happen, and try/catch block makes it
                     // non-fatal as it is not a big issue to register later.
-                    node {
+                    node("master") {
                         // The shell part must run on a node (NOTE: and also as
                         // "gitowner" with write-access to the jenkins-gitcache
                         // directory if locally or over NFS)
