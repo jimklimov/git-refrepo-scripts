@@ -80,7 +80,7 @@ The "false" mode builds the list and passes each fetch one by one, slowest but s
         stage("Updater") {
             steps {
                 timeout (time: 9600, unit: 'SECONDS', activity: true) {
-                    lock (resources: gitcache_lockname, quantity: 1) {
+                    lock (resource: gitcache_lockname, quantity: 1) {
                         sh """
 ### Avoid erroring out
 set +e
