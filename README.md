@@ -47,5 +47,14 @@ stays relevant). Be sure to set `REFREPODIR_MODE` for those runs, either
 from environment or by using a `.gitcache.conf` file in the refrepo dir.
 The `Jenkinsfile-update-gitcache` offers a starting point for such job.
 
+* With 2.36.x and newer Git versions, if your reference repository
+maintenance script runs as a different user account than the Jenkins server
+(or Jenkins agent) on the same system, safety checks about `safe.directory`
+(see https://github.blog/2022-04-18-highlights-from-git-2-36/) can be
+disabled by configuring each such user account:
+````
+:; git config --global --add safe.directory '*'
+````
+
 Hope this helps,
 Jim Klimov
