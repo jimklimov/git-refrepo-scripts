@@ -51,8 +51,9 @@ up Git clones and fetches.
 * With 2.36.x and newer Git versions, if your reference repository
   maintenance script runs as a different user account than the Jenkins server
   (or Jenkins agent) on the same system, safety checks about `safe.directory`
-  (see https://github.blog/2022-04-18-highlights-from-git-2-36/) can be
-  disabled by configuring each such user account:
+  from 2.35.2 (see https://github.blog/2022-04-18-highlights-from-git-2-36/ and
+  https://git-scm.com/docs/git-config/#Documentation/git-config.txt-safedirectory)
+  can be disabled by configuring each such user account:
   ````
   :; git config --global --add safe.directory '*'
   ````
