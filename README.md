@@ -2,6 +2,9 @@
 Scripts to manage a monolithic or nested-fanout reference repository to speed
 up Git clones and fetches.
 
+It aims to align with related evolution of Jenkins Git Client plugin proposed in
+[jenkinsci/git-client-plugin#644](https://github.com/jenkinsci/git-client-plugin/pull/644)
+
 * The `register-git-cache.sh` script is not (yet?) a git method.
   This script is here to allow managing a git repository in the directory it
   resides in as a sort of cache, usable as a reference git repo for faster
