@@ -75,7 +75,15 @@
 #   C:> set REFREPODIR_MODE=GIT_SUBMODULES
 #   C:> register-git-cache.sh add-recursive https://github.com/org/repo.git
 #
-# Copyright 2018-2021 (C) Jim Klimov <jimklimov@gmail.com>
+# Actions that add or remove a registered URL (add, add-recursive, del/rm,
+# dedup-references), as well as an explicit `map`/`save-map` action, keep a
+# GITCACHE_MAP_FILE (default REFREPODIR_BASE/.gitcache.map; disable with
+# SAVE_MAP=false) up to date with the same "REPOID URL DIRNAME" data as `ls`.
+# Consumers that know a wanted URL (e.g. Jenkins git-client-plugin resolving
+# a parameterized GIT_SUBMODULES reference repo) can read this one file to
+# find the right subdirectory, instead of walking the whole fan-out tree.
+#
+# Copyright 2018-2026 (C) Jim Klimov <jimklimov@gmail.com>
 # Shared on the terms of MIT license.
 # Original development tracked at https://github.com/jimklimov/git-scripts
 #
@@ -155,6 +163,23 @@ EXCEPT_PATTERNS_FILE="${REFREPODIR_BASE}/.gitcache.except"
 case "${QUIET_SKIP-}" in
     [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) QUIET_SKIP=true ;;
     *) QUIET_SKIP=false ;;
+esac
+
+# This file (same tab-separated "REPOID URL DIRNAME" shape as `ls` output,
+# see do_list_repoids()) is (re)written whenever we register or unregister a
+# URL below, so that a consumer with a known needle URL (e.g. the Jenkins
+# git-client-plugin resolving a parameterized GIT_SUBMODULES reference repo)
+# can look it up directly instead of walking every subdirectory and running
+# `git remote -v` in each one. A stale or absent file is expected to be a
+# safe, if slower, fallback for such consumers - so it is fine for this to
+# lag a little behind manual/out-of-band changes to the cache directories;
+# just call this script's `save-map` action (or any mutating action) to
+# refresh it on demand.
+[ -n "$GITCACHE_MAP_FILE" ] || \
+GITCACHE_MAP_FILE="${REFREPODIR_BASE}/.gitcache.map"
+case "${SAVE_MAP-}" in
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]) SAVE_MAP=false ;;
+    *) SAVE_MAP=true ;;
 esac
 
 getHash_sha256() {
@@ -777,6 +802,38 @@ do_list_repoids() {
     fi
 }
 
+do_save_map() {
+    # (Re-)write GITCACHE_MAP_FILE with the current full "ls" listing, so a
+    # consumer (see comment above GITCACHE_MAP_FILE default) can resolve a
+    # needle URL to its subdirectory by reading one file instead of walking
+    # the whole fanned-out tree. Written atomically (temp file + rename) so
+    # a reader never sees a half-written file.
+    [ "$SAVE_MAP" = true ] || { echo "SKIP: Not saving '$GITCACHE_MAP_FILE' (SAVE_MAP=$SAVE_MAP)" >&2; return 0; }
+
+    # By this point in a run, KNOWN_REPOIDS may already be non-empty but only
+    # holding entries touched so far (do_register_repo()/do_unregister_repo()
+    # append/were meant to track just their own repo, they do not seed the
+    # full picture the way add-recursive's up-front cache_list_repoids() does).
+    # Force a full, current re-scan so the saved map is never a partial one.
+    KNOWN_REPOIDS=()
+
+    local TMP
+    TMP="`mktemp "${GITCACHE_MAP_FILE}.XXXXXXXX"`" && [ -n "$TMP" ] || {
+        echo "ERROR: Could not create a temp file next to '$GITCACHE_MAP_FILE'" >&2
+        return 1
+    }
+
+    if QUIET_SKIP=true do_list_repoids > "$TMP" ; then
+        mv -f "$TMP" "$GITCACHE_MAP_FILE" \
+        && echo "[I] `date`: Saved current repo-id/URL/subdir mapping to '$GITCACHE_MAP_FILE'" >&2 \
+        || { echo "ERROR: Failed to install new '$GITCACHE_MAP_FILE'" >&2; rm -f "$TMP"; return 1; }
+    else
+        echo "ERROR: Failed to list repo-id/URL/subdir data for '$GITCACHE_MAP_FILE'" >&2
+        rm -f "$TMP"
+        return 1
+    fi
+}
+
 do_fetch_repos_verbose_seq() (
     # Fetches repos listed on stdin and reports, sequentially
     # -f allows to force-update references to remote current state (e.g. floating tags)
@@ -1035,6 +1092,11 @@ get_subrepo_dir() {
 
 BIG_RES=0
 DID_UPDATE=false
+# Narrower than DID_UPDATE: only set true by actions that can add or remove
+# a registered REPOID/URL/DIRNAME mapping, so we only pay for regenerating
+# GITCACHE_MAP_FILE (a directory listing plus `git remote -v` per dir, via
+# cache_list_repoids) when that data could actually have changed.
+DID_MUTATE_REGISTRY=false
 
 # Note: assumes the script running user may write to the refrepo dir tree
 if [ -n "${REFREPODIR-}" ] && [ -d "${REFREPODIR-}" ]; then
@@ -1108,6 +1170,15 @@ $0 dedup-references [REPO_URL...]     => unregister URLs that are listed many
 where REPO_URL are singular original exact remote repository URLs
 and REPO_GLOB matches by substring of 'git remote -v' output
 
+$0 { map | save-map }                 => (re-)write GITCACHE_MAP_FILE (default
+                                         \${REFREPODIR_BASE}/.gitcache.map) with
+                                         current "ls" data, for faster lookups
+                                         by external consumers (e.g. Jenkins
+                                         git-client-plugin's GIT_SUBMODULES
+                                         reference-repo resolution); this also
+                                         happens automatically after add(-recursive),
+                                         del/rm and dedup-references, unless
+                                         SAVE_MAP=false
 $0 { repack | repack-parallel | gc }  => maintenance operations
 $0 { lock | unlock }  => admin lock to not disturb during maintenance
 EOF
@@ -1134,10 +1205,12 @@ EOF
         git@*|ssh://*|https://*|http://*)
             do_register_repo "$1" || BIG_RES=$?
             DID_UPDATE=true
+            DID_MUTATE_REGISTRY=true
             ;;
         add)
             do_register_repo "$2" || BIG_RES=$?
             DID_UPDATE=true
+            DID_MUTATE_REGISTRY=true
             shift
             ;;
         add-recursive)
@@ -1153,6 +1226,7 @@ EOF
                 shift $#
             fi
             DID_UPDATE=true
+            DID_MUTATE_REGISTRY=true
             ;;
         clone|checkout|co)
             do_register_repo "$2" \
@@ -1160,12 +1234,19 @@ EOF
                 do_fetch_repos $DO_FETCH "$2" || BIG_RES=$?
             fi
             DID_UPDATE=true
+            DID_MUTATE_REGISTRY=true
             shift
             ;;
         del|delete|remove|rm)
             do_unregister_repos "$2" || BIG_RES=$?
             DID_UPDATE=true
+            DID_MUTATE_REGISTRY=true
             shift
+            ;;
+        map|save-map|update-map)
+            # No-op marker: forces do_save_map at end of run, e.g. from cron
+            # or CI right after some out-of-band change to the cache dirs.
+            DID_MUTATE_REGISTRY=true
             ;;
         fetch-all|update-all|pull-all|up-all)
             lower_priority
@@ -1243,6 +1324,7 @@ EOF
                 done
             )
             DID_UPDATE=true
+            DID_MUTATE_REGISTRY=true
             shift $#
             ;;
         --dev-test)
@@ -1259,6 +1341,12 @@ EOF
     esac
     shift
 done
+
+if "$DID_MUTATE_REGISTRY" ; then
+    # Refresh before any ZFS snapshot below, so a restored snapshot also
+    # has a mapping file consistent with the registrations it captures.
+    do_save_map || BIG_RES=$?
+fi
 
 if "$DID_UPDATE" && [ -d ./.zfs ] ; then
     SNAPDATE="`TZ=UTC date -u +%Y%m%dT%H%M%SZ`" && [ -n "$SNAPNAME" ] \

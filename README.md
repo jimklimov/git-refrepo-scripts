@@ -85,6 +85,20 @@ Corollaries:
       detailed in header comments of the script.
     * This project was tested to work on Windows deployments; and is regularly
       used on Linux and OpenIndiana (illumos/Solaris) Jenkins controllers.
+    * Whenever a URL is registered or unregistered (`add`, `add-recursive`,
+      `del`/`rm`, `dedup-references`), or when explicitly asked via the
+      `map`/`save-map` action, the script (re-)writes a `GITCACHE_MAP_FILE`
+      (default `${REFREPODIR_BASE}/.gitcache.map`) with the same tab-separated
+      "REPOID URL DIRNAME" data as its `ls` action. As of git-client-plugin
+      support added alongside this feature, this lets a `${GIT_SUBMODULES}`-style
+      consumer resolve a wanted URL to its cache subdirectory by reading one
+      small file, instead of walking every subdirectory and running
+      `git remote -v` in each of them - a large speedup once the fan-out
+      directory has many entries. Set `SAVE_MAP=false` to disable this (e.g.
+      if you maintain your own equivalent file some other way); a missing or
+      stale mapping file is always a safe (if slower) fallback for consumers,
+      since they double-check any hit is still a usable git directory before
+      trusting it.
 
 * The `git-clone-rr` is a git method (can be used as `git clone-rr` if
   placed into `PATH`) that can use a `GIT_REFERENCE_REPO_DIR` envvar or
